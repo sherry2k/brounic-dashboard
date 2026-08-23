@@ -15,21 +15,33 @@ export default function Logo({
   variant?: "light" | "dark";
   size?: number;
 }) {
+  const chipPadding = Math.round(size * 0.15);
+
   return (
     <div className="flex items-center gap-2">
       <div
-        className="relative shrink-0"
-        style={{ width: size, height: size }}
+        className={
+          variant === "dark"
+            ? "relative shrink-0 rounded-md bg-white"
+            : "relative shrink-0"
+        }
+        style={{
+          width: size + (variant === "dark" ? chipPadding * 2 : 0),
+          height: size + (variant === "dark" ? chipPadding * 2 : 0),
+          padding: variant === "dark" ? chipPadding : 0,
+        }}
       >
-        <Image
-          src="/logo.png"
-          alt="Brounic Group | Fire and Safety"
-          fill
-          className="object-contain"
-          onError={(e) => {
-            (e.target as HTMLImageElement).style.display = "none";
-          }}
-        />
+        <div className="relative w-full h-full">
+          <Image
+            src="/logo.png"
+            alt="Brounic Group | Fire and Safety"
+            fill
+            className="object-contain"
+            onError={(e) => {
+              (e.target as HTMLImageElement).style.display = "none";
+            }}
+          />
+        </div>
       </div>
       <div className="leading-tight">
         <div
