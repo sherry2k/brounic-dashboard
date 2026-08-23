@@ -1,0 +1,273 @@
+// Brounic Dashboard — Prisma schema
+// Covers: employee auth/approval, new projects (with shop drawings),
+// maintenance jobs, and AMC contracts with quarterly visits + checklists.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------- Auth / Users ----------
+
+enum Role {
+  EMPLOYEE
+  ADMIN
+}
+
+enum UserStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+model User {
+  id           String     @id @default(cuid())
+  name         String
+  email        String     @unique
+  passwordHash String
+  role         Role       @default(EMPLOYEE)
+  status       UserStatus @default(PENDING)
+  requestedAt  DateTime   @default(now())
+  reviewedAt   DateTime?
+  reviewedById String?
+  reviewedBy   User?      @relation("Reviewer", fields: [reviewedById], references: [id])
+  reviewedUsers User[]    @relation("Reviewer")
+
+  amcVisitsAssigned      AMCVisit[]       @relation("AMCTechnician")
+  maintenanceAssigned    MaintenanceJob[] @relation("MaintenanceTechnician")
+  createdProjects        Project[]        @relation("ProjectCreatedBy")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ---------- Shared: Client / Site ----------
+
+model Client {
+  id    String @id @default(cuid())
+  name  String
+  sites Site[]
+
+  createdAt DateTime @default(now())
+}
+
+model Site {
+  id       String @id @default(cuid())
+  clientId String
+  client   Client @relation(fields: [clientId], references: [id])
+  name     String
+  address  String?
+
+  projects        Project[]
+  maintenanceJobs MaintenanceJob[]
+  amcContracts    AMCContract[]
+
+  createdAt DateTime @default(now())
+}
+
+// ---------- Module 1: New Project (Supply & Installation) ----------
+
+enum ProjectStage {
+  QUOTATION
+  PO_RECEIVED
+  SHOP_DRAWING
+  MATERIAL_PROCUREMENT
+  INSTALLATION
+  TESTING_COMMISSIONING
+  HANDOVER
+  COMPLETED
+}
+
+model Project {
+  id            String       @id @default(cuid())
+  siteId        String
+  site          Site         @relation(fields: [siteId], references: [id])
+  poNumber      String?
+  contractValue Float?
+  scopeOfWork   String?
+  stage         ProjectStage @default(QUOTATION)
+
+  createdById String
+  createdBy   User   @relation("ProjectCreatedBy", fields: [createdById], references: [id])
+
+  shopDrawings ShopDrawing[]
+
+  // once completed, a project can spawn linked maintenance/AMC records
+  maintenanceJobs MaintenanceJob[]
+  amcContracts    AMCContract[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum DrawingStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+}
+
+model ShopDrawing {
+  id            String        @id @default(cuid())
+  projectId     String
+  project       Project       @relation(fields: [projectId], references: [id])
+  drawingNumber String
+  revision      Int           @default(1)
+  status        DrawingStatus @default(DRAFT)
+  submittedAt   DateTime?
+  reviewedAt    DateTime?
+  reviewerNotes String?
+  fileUrl       String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ---------- Module 2: Maintenance ----------
+
+enum MaintenanceJobType {
+  REACTIVE
+  SCHEDULED
+  WARRANTY
+}
+
+enum MaintenanceStatus {
+  REPORTED
+  ASSIGNED
+  IN_PROGRESS
+  RESOLVED
+  CLIENT_SIGNOFF
+}
+
+model MaintenanceJob {
+  id          String             @id @default(cuid())
+  siteId      String
+  site        Site               @relation(fields: [siteId], references: [id])
+  projectId   String?
+  project     Project?           @relation(fields: [projectId], references: [id])
+  jobType     MaintenanceJobType @default(REACTIVE)
+  status      MaintenanceStatus  @default(REPORTED)
+  description String
+  partsUsed   String?
+  resolutionNotes String?
+
+  assignedToId String?
+  assignedTo   User?  @relation("MaintenanceTechnician", fields: [assignedToId], references: [id])
+
+  reportedAt DateTime  @default(now())
+  resolvedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ---------- Module 3: AMC (Annual Maintenance Contract) ----------
+
+model AMCContract {
+  id             String   @id @default(cuid())
+  siteId         String
+  site           Site     @relation(fields: [siteId], references: [id])
+  projectId      String?
+  project        Project? @relation(fields: [projectId], references: [id])
+  contractValue  Float?
+  contractStart  DateTime
+  contractEnd    DateTime
+  visitsPerYear  Int      @default(4)
+
+  visits AMCVisit[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum AMCVisitStatus {
+  UPCOMING
+  DUE
+  OVERDUE
+  COMPLETED
+}
+
+enum QuarterLabel {
+  Q1
+  Q2
+  Q3
+  Q4
+}
+
+model AMCVisit {
+  id           String         @id @default(cuid())
+  contractId   String
+  contract     AMCContract    @relation(fields: [contractId], references: [id])
+  quarter      QuarterLabel
+  dueDate      DateTime
+  status       AMCVisitStatus @default(UPCOMING)
+  completedAt  DateTime?
+  reportUrl    String?
+  clientSignedOff Boolean     @default(false)
+
+  technicianId String?
+  technician   User?  @relation("AMCTechnician", fields: [technicianId], references: [id])
+
+  checklistItems ChecklistItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum ChecklistSystem {
+  EXTINGUISHER
+  FIRE_ALARM
+  SPRINKLER
+  FIRE_PUMP
+  HYDRANT_HOSE_REEL
+  EMERGENCY_LIGHTING
+}
+
+enum ChecklistResult {
+  PASS
+  FAIL
+  NOT_APPLICABLE
+}
+
+model ChecklistItem {
+  id          String          @id @default(cuid())
+  visitId     String
+  visit       AMCVisit        @relation(fields: [visitId], references: [id])
+  system      ChecklistSystem
+  description String
+  result      ChecklistResult @default(NOT_APPLICABLE)
+  reading     String?
+  remarks     String?
+  photoUrl    String?
+
+  nonConformance NonConformance?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum NonConformanceStatus {
+  OPEN
+  ACTION_ASSIGNED
+  RESOLVED
+  CLOSED
+}
+
+model NonConformance {
+  id              String                @id @default(cuid())
+  checklistItemId String                @unique
+  checklistItem   ChecklistItem         @relation(fields: [checklistItemId], references: [id])
+  status          NonConformanceStatus  @default(OPEN)
+  correctiveAction String?
+  assignedNote    String?
+  resolvedAt      DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
