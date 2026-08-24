@@ -18,11 +18,19 @@ export default async function ProjectDetailPage({ params }: { params: { id: stri
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-lg font-medium text-brounic-black">{project.projectName}</h1>
-        <p className="text-sm text-gray-500">
-          Plot {project.plotNo ?? "—"} · {project.location ?? "—"} · PO {project.poNumber ?? "—"}
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-lg font-medium text-brounic-black">{project.projectName}</h1>
+          <p className="text-sm text-gray-500">
+            Plot {project.plotNo ?? "—"} · {project.location ?? "—"} · PO {project.poNumber ?? "—"}
+          </p>
+        </div>
+        <a
+          href={`/dashboard/projects/${project.id}/edit`}
+          className="shrink-0 bg-brounic-black hover:bg-brounic-orange text-white rounded-md px-3 py-2 text-sm font-medium transition-colors"
+        >
+          Edit
+        </a>
       </div>
 
       <section className="space-y-3">

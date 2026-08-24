@@ -10,27 +10,28 @@ const SHOP_DRAWING_OPTIONS = [
   { value: "APPROVED", label: "Approved" },
 ];
 
-export default function NewProjectPage() {
+export default function EditProjectForm({ project }: { project: any }) {
   const router = useRouter();
   const [form, setForm] = useState({
-    projectName: "",
-    plotNo: "",
-    location: "",
-    shopDrawingStatus: "NOT_STARTED",
-    notes: "",
-    poNumber: "",
-    contractValue: "",
+    projectName: project.projectName ?? "",
+    plotNo: project.plotNo ?? "",
+    location: project.location ?? "",
+    shopDrawingStatus: project.shopDrawingStatus ?? "NOT_STARTED",
+    notes: project.notes ?? "",
+    poNumber: project.poNumber ?? "",
+    contractValue: project.contractValue?.toString() ?? "",
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
     setLoading(true);
 
-    const res = await fetch("/api/projects", {
-      method: "POST",
+    const res = await fetch(`/api/projects/${project.id}`, {
+      method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(form),
     });
@@ -43,17 +44,31 @@ export default function NewProjectPage() {
       return;
     }
 
-    const { project } = await res.json();
     router.push(`/dashboard/projects/${project.id}`);
+    router.refresh();
+  }
+
+  async function handleDelete() {
+    if (!confirm(`Delete "${project.projectName}"? This can't be undone.`)) return;
+    setDeleting(true);
+
+    const res = await fetch(`/api/projects/${project.id}`, { method: "DELETE" });
+
+    setDeleting(false);
+
+    if (!res.ok) {
+      setError("Failed to delete project");
+      return;
+    }
+
+    router.push("/dashboard/projects");
+    router.refresh();
   }
 
   return (
     <div className="max-w-xl space-y-6">
       <div>
-        <h1 className="text-lg font-medium text-brounic-black">Add new project</h1>
-        <p className="text-sm text-gray-500 mt-1">
-          New project — supply &amp; installation. Starts at the Quotation stage.
-        </p>
+        <h1 className="text-lg font-medium text-brounic-black">Edit project</h1>
       </div>
 
       <form
@@ -67,7 +82,6 @@ export default function NewProjectPage() {
             className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brounic-orange focus:border-brounic-orange"
             value={form.projectName}
             onChange={(e) => setForm({ ...form, projectName: e.target.value })}
-            placeholder="e.g. One Pice Transport Gen. Contracting"
           />
         </div>
 
@@ -78,7 +92,6 @@ export default function NewProjectPage() {
               className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brounic-orange focus:border-brounic-orange"
               value={form.plotNo}
               onChange={(e) => setForm({ ...form, plotNo: e.target.value })}
-              placeholder="e.g. T1003"
             />
           </div>
           <div>
@@ -87,7 +100,6 @@ export default function NewProjectPage() {
               className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brounic-orange focus:border-brounic-orange"
               value={form.location}
               onChange={(e) => setForm({ ...form, location: e.target.value })}
-              placeholder="e.g. Ghyathi"
             />
           </div>
         </div>
@@ -114,7 +126,6 @@ export default function NewProjectPage() {
             className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brounic-orange focus:border-brounic-orange"
             value={form.notes}
             onChange={(e) => setForm({ ...form, notes: e.target.value })}
-            placeholder="Progress notes — e.g. FACP installations done, PVC piping & cabling in progress..."
           />
         </div>
 
@@ -141,20 +152,28 @@ export default function NewProjectPage() {
 
         {error && <p className="text-sm text-red-600">{error}</p>}
 
-        <div className="flex items-center gap-3 pt-2">
+        <div className="flex flex-wrap items-center gap-3 pt-2">
           <button
             type="submit"
             disabled={loading}
             className="bg-brounic-black hover:bg-brounic-orange text-white rounded-md px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50"
           >
-            {loading ? "Creating..." : "Create project"}
+            {loading ? "Saving..." : "Save changes"}
           </button>
           <button
             type="button"
-            onClick={() => router.push("/dashboard/projects")}
+            onClick={() => router.push(`/dashboard/projects/${project.id}`)}
             className="text-sm text-gray-500"
           >
             Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleDelete}
+            disabled={deleting}
+            className="ml-auto text-sm text-red-600 disabled:opacity-50"
+          >
+            {deleting ? "Deleting..." : "Delete project"}
           </button>
         </div>
       </form>

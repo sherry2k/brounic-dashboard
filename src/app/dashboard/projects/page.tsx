@@ -22,8 +22,8 @@ export default async function ProjectsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-lg font-medium text-brounic-black">New projects — supply &amp; installation</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-lg font-medium text-brounic-black">New projects — supply & installation</h1>
         <Link
           href="/dashboard/projects/new"
           className="bg-brounic-orange hover:bg-brounic-black text-white rounded-md px-4 py-2 text-sm font-medium transition-colors"
@@ -32,7 +32,7 @@ export default async function ProjectsPage() {
         </Link>
       </div>
 
-      <div className="border border-gray-200 rounded-lg bg-white overflow-hidden">
+      <div className="border border-gray-200 rounded-lg bg-white overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-gray-50 text-left text-gray-500">
             <tr>

@@ -163,8 +163,11 @@ enum MaintenanceStatus {
 
 model MaintenanceJob {
   id          String             @id @default(cuid())
-  siteId      String
-  site        Site               @relation(fields: [siteId], references: [id])
+  jobName     String
+  plotNo      String?
+  location    String?
+  siteId      String?
+  site        Site?              @relation(fields: [siteId], references: [id])
   projectId   String?
   project     Project?           @relation(fields: [projectId], references: [id])
   jobType     MaintenanceJobType @default(REACTIVE)
@@ -187,14 +190,18 @@ model MaintenanceJob {
 
 model AMCContract {
   id             String   @id @default(cuid())
-  siteId         String
-  site           Site     @relation(fields: [siteId], references: [id])
+  projectName    String
+  plotNo         String?
+  location       String?
+  siteId         String?
+  site           Site?    @relation(fields: [siteId], references: [id])
   projectId      String?
   project        Project? @relation(fields: [projectId], references: [id])
   contractValue  Float?
   contractStart  DateTime
   contractEnd    DateTime
   visitsPerYear  Int      @default(4)
+  remarks        String?
 
   visits AMCVisit[]
 

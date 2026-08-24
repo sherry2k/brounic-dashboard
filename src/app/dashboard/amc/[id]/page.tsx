@@ -12,7 +12,6 @@ export default async function AMCContractDetailPage({ params }: { params: { id: 
   const contract = await prisma.aMCContract.findUnique({
     where: { id: params.id },
     include: {
-      site: { include: { client: true } },
       visits: {
         include: { checklistItems: { include: { nonConformance: true } }, technician: true },
         orderBy: { dueDate: "asc" },
@@ -25,24 +24,26 @@ export default async function AMCContractDetailPage({ params }: { params: { id: 
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-lg font-medium">
-          {contract.site.client.name} — {contract.site.name}
-        </h1>
+        <h1 className="text-lg font-medium text-brounic-black">{contract.projectName}</h1>
         <p className="text-sm text-gray-500">
+          Plot {contract.plotNo ?? "—"} · {contract.location ?? "—"} ·{" "}
           {contract.contractStart.toLocaleDateString()} – {contract.contractEnd.toLocaleDateString()}
         </p>
+        {contract.remarks && (
+          <p className="text-sm text-gray-500 mt-1">Remarks: {contract.remarks}</p>
+        )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {contract.visits.map((v) => {
           const openIssues = v.checklistItems.filter(
             (i) => i.nonConformance && i.nonConformance.status !== "CLOSED"
           ).length;
 
           return (
-            <div key={v.id} className="border rounded-lg bg-white p-4 space-y-2">
+            <div key={v.id} className="border border-gray-200 rounded-lg bg-white p-4 space-y-2">
               <div className="flex items-center justify-between">
-                <span className="font-medium">{v.quarter}</span>
+                <span className="font-medium text-brounic-black">{v.quarter}</span>
                 <span className={`text-xs px-2 py-1 rounded-full ${STATUS_STYLES[v.status]}`}>
                   {v.status}
                 </span>

@@ -32,11 +32,13 @@ export const DEFAULT_CHECKLIST_TEMPLATE: { system: string; description: string }
  * default checklist template.
  */
 export async function createAMCContractWithVisits(input: {
-  siteId: string;
-  projectId?: string;
+  projectName: string;
+  plotNo?: string;
+  location?: string;
   contractValue?: number;
   contractStart: Date;
   contractEnd: Date;
+  remarks?: string;
 }) {
   const quarters: { label: "Q1" | "Q2" | "Q3" | "Q4"; offsetDays: number }[] = [
     { label: "Q1", offsetDays: 0 },
@@ -47,11 +49,13 @@ export async function createAMCContractWithVisits(input: {
 
   return prisma.aMCContract.create({
     data: {
-      siteId: input.siteId,
-      projectId: input.projectId,
+      projectName: input.projectName,
+      plotNo: input.plotNo || null,
+      location: input.location || null,
       contractValue: input.contractValue,
       contractStart: input.contractStart,
       contractEnd: input.contractEnd,
+      remarks: input.remarks || null,
       visitsPerYear: 4,
       visits: {
         create: quarters.map((q) => {
