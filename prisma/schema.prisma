@@ -83,10 +83,26 @@ enum ProjectStage {
   COMPLETED
 }
 
+enum ShopDrawingStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  NEEDS_REVIEW
+  APPROVED
+}
+
 model Project {
-  id            String       @id @default(cuid())
-  siteId        String
-  site          Site         @relation(fields: [siteId], references: [id])
+  id                String            @id @default(cuid())
+  projectName       String
+  plotNo            String?
+  location          String?
+  shopDrawingStatus ShopDrawingStatus @default(NOT_STARTED)
+  notes             String?
+
+  // optional link to a Site/Client record, for teams that want the fuller
+  // client/site model down the line — not required day-to-day
+  siteId String?
+  site   Site?   @relation(fields: [siteId], references: [id])
+
   poNumber      String?
   contractValue Float?
   scopeOfWork   String?
