@@ -16,7 +16,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   return (
     <div className="min-h-screen flex bg-brounic-light">
-      <aside className="w-56 bg-brounic-black px-4 py-6 flex flex-col justify-between">
+      <aside className="w-56 bg-brounic-dark px-4 py-6 flex flex-col justify-between">
         <div>
           <div className="mb-8 px-2">
             <Logo variant="dark" size={36} />
@@ -26,7 +26,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
               <Link
                 key={item.href}
                 href={item.href}
-                className="block px-3 py-2 text-sm rounded-md text-gray-300 hover:bg-brounic-dark hover:text-white transition-colors"
+                className="block px-3 py-2 text-sm rounded-md text-gray-300 hover:bg-black/30 hover:text-white transition-colors"
               >
                 {item.label}
               </Link>
@@ -34,7 +34,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
             {role === "ADMIN" && (
               <Link
                 href="/admin/employees"
-                className="block px-3 py-2 text-sm rounded-md text-brounic-accent hover:bg-brounic-dark transition-colors"
+                className="block px-3 py-2 text-sm rounded-md text-brounic-accent hover:bg-black/30 transition-colors"
               >
                 Employee approvals
               </Link>
