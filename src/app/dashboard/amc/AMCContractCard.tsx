@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Pencil, Trash2, Save, X, User, MapPin, CalendarDays, ChevronDown, ChevronRight } from "lucide-react";
+import { Pencil, Trash2, Save, X, User, MapPin, CalendarDays, ChevronDown, ChevronRight, RefreshCcw, AlertTriangle } from "lucide-react";
 
 const STATUS_BADGE: Record<string, string> = {
   UPCOMING: "bg-brounic-accent/30 text-brounic-orange",
@@ -144,20 +144,45 @@ function VisitRow({
   );
 }
 
+const RENEWAL_WINDOW_DAYS = 30;
+
+function getExpiryState(contractEnd: string) {
+  const end = new Date(contractEnd);
+  const daysLeft = Math.round((end.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+  if (daysLeft < 0) return { state: "expired" as const, daysLeft };
+  if (daysLeft <= RENEWAL_WINDOW_DAYS) return { state: "due" as const, daysLeft };
+  return { state: "ok" as const, daysLeft };
+}
+
 export default function AMCContractCard({
   contract,
   onEditContract,
   onDeleteContract,
   onVisitUpdated,
   onVisitDeleted,
+  onRenewed,
 }: {
   contract: any;
   onEditContract: () => void;
   onDeleteContract: () => void;
   onVisitUpdated: (v: any) => void;
   onVisitDeleted: (id: string) => void;
+  onRenewed: (newContract: any, oldContractId: string) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
+  const [renewing, setRenewing] = useState(false);
+  const expiry = getExpiryState(contract.contractEnd);
+
+  async function handleRenew() {
+    if (!confirm(`Create the next AMC period for "${contract.projectName}"? This starts a new contract with 4 fresh quarterly visits.`)) return;
+    setRenewing(true);
+    const res = await fetch(`/api/amc/${contract.id}/renew`, { method: "POST" });
+    setRenewing(false);
+    if (res.ok) {
+      const { contract: newContract, oldContractId } = await res.json();
+      onRenewed(newContract, oldContractId);
+    }
+  }
 
   return (
     <div className="border border-gray-200 rounded-lg bg-white overflow-hidden">
@@ -188,6 +213,16 @@ export default function AMCContractCard({
               />
             ))}
           </div>
+          {contract.overallStatus !== "COMPLETED" && expiry.state === "expired" && (
+            <span className="flex items-center gap-1 text-xs px-2 py-1 rounded-full font-medium whitespace-nowrap bg-red-100 text-red-700">
+              <AlertTriangle size={11} /> Contract Expired
+            </span>
+          )}
+          {contract.overallStatus !== "COMPLETED" && expiry.state === "due" && (
+            <span className="flex items-center gap-1 text-xs px-2 py-1 rounded-full font-medium whitespace-nowrap bg-blue-100 text-blue-700">
+              <RefreshCcw size={11} /> Waiting for Renewal
+            </span>
+          )}
           <span className={`text-xs px-2 py-1 rounded-full font-medium whitespace-nowrap ${OVERALL_STATUS_BADGE[contract.overallStatus]}`}>
             {OVERALL_STATUS_LABEL[contract.overallStatus]}
           </span>
@@ -207,8 +242,20 @@ export default function AMCContractCard({
             </div>
             <div className="flex items-center gap-2">
               <CalendarDays size={14} className="text-brounic-orange shrink-0" />
-              Contract: {new Date(contract.contractStart).toLocaleDateString()}
+              Contract: {new Date(contract.contractStart).toLocaleDateString()} – {new Date(contract.contractEnd).toLocaleDateString()}
             </div>
+            {contract.overallStatus !== "COMPLETED" && expiry.state === "expired" && (
+              <div className="flex items-center gap-2 text-red-600 font-medium">
+                <AlertTriangle size={14} className="shrink-0" />
+                Expired {Math.abs(expiry.daysLeft)}d ago
+              </div>
+            )}
+            {contract.overallStatus !== "COMPLETED" && expiry.state === "due" && (
+              <div className="flex items-center gap-2 text-blue-600 font-medium">
+                <RefreshCcw size={14} className="shrink-0" />
+                Renewal due in {expiry.daysLeft}d
+              </div>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -216,6 +263,16 @@ export default function AMCContractCard({
               <VisitRow key={visit.id} visit={visit} onUpdated={onVisitUpdated} onDeleted={onVisitDeleted} />
             ))}
           </div>
+
+          {contract.overallStatus !== "COMPLETED" && expiry.state !== "ok" && (
+            <button
+              onClick={handleRenew}
+              disabled={renewing}
+              className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50"
+            >
+              <RefreshCcw size={14} /> {renewing ? "Renewing..." : "Renew Contract"}
+            </button>
+          )}
 
           <div className="flex items-center gap-3 pt-2 border-t border-gray-100">
             <button

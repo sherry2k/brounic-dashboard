@@ -59,6 +59,24 @@ export default function AMCListClient({
     );
   }
 
+  function handleRenewed(newContract: any, oldContractId: string) {
+    setContracts((prev) => {
+      const updated = prev.map((c) =>
+        c.id === oldContractId ? { ...c, overallStatus: "COMPLETED" } : c
+      );
+      return [
+        {
+          ...newContract,
+          visits: newContract.visits.map((v: any) => ({
+            ...v,
+            dueDate: typeof v.dueDate === "string" ? v.dueDate : v.dueDate.toISOString?.() ?? v.dueDate,
+          })),
+        },
+        ...updated,
+      ];
+    });
+  }
+
   async function handleDeleteContract(id: string) {
     if (!confirm("Delete this AMC contract and all its visits? This can't be undone.")) return;
     const res = await fetch(`/api/amc/${id}`, { method: "DELETE" });
@@ -117,6 +135,7 @@ export default function AMCListClient({
             onDeleteContract={() => handleDeleteContract(contract.id)}
             onVisitUpdated={(visit) => updateVisitInPlace(contract.id, visit)}
             onVisitDeleted={(visitId) => removeVisitInPlace(contract.id, visitId)}
+            onRenewed={handleRenewed}
           />
         ))}
         {filtered.length === 0 && (
