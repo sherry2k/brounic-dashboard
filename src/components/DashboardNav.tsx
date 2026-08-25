@@ -11,6 +11,7 @@ const navItems = [
   { href: "/dashboard/projects", label: "New projects" },
   { href: "/dashboard/maintenance", label: "Maintenance" },
   { href: "/dashboard/amc", label: "AMC" },
+  { href: "/dashboard/account", label: "Change Password" },
 ];
 
 export default function DashboardNav({

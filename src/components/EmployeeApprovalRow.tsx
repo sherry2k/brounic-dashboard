@@ -20,6 +20,28 @@ export default function EmployeeApprovalRow({ user }: { user: any }) {
     router.refresh();
   }
 
+  async function resetPassword() {
+    const newPassword = window.prompt(`Set a new password for ${user.name} (min 8 characters):`);
+    if (!newPassword) return;
+    if (newPassword.length < 8) {
+      alert("Password must be at least 8 characters.");
+      return;
+    }
+    setLoading(true);
+    const res = await fetch(`/api/admin/employees/${user.id}/reset-password`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ newPassword }),
+    });
+    setLoading(false);
+    if (res.ok) {
+      alert(`Password updated for ${user.name}.`);
+    } else {
+      const data = await res.json();
+      alert(data.error || "Failed to reset password");
+    }
+  }
+
   return (
     <tr className="border-t">
       <td className="px-4 py-3">{user.name}</td>
@@ -60,6 +82,11 @@ export default function EmployeeApprovalRow({ user }: { user: any }) {
             {!isMaster && (
               <button disabled={loading} onClick={() => act("SUSPEND")} className="text-gray-500 underline text-sm">
                 Suspend
+              </button>
+            )}
+            {!isMaster && (
+              <button disabled={loading} onClick={resetPassword} className="text-brounic-dark underline text-sm">
+                Reset Password
               </button>
             )}
           </>
