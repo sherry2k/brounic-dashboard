@@ -3,13 +3,20 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import EmployeeApprovalRow from "@/components/EmployeeApprovalRow";
+import { MASTER_ADMIN_EMAIL } from "@/lib/constants";
 
 export default async function EmployeeApprovalsPage() {
   const session = await getServerSession(authOptions);
   if ((session?.user as any)?.role !== "ADMIN") redirect("/dashboard");
 
+  const isMasterViewing = session?.user?.email === MASTER_ADMIN_EMAIL;
+
   const users = await prisma.user.findMany({
-    where: { status: { in: ["PENDING", "APPROVED", "SUSPENDED"] } },
+    where: {
+      status: { in: ["PENDING", "APPROVED", "SUSPENDED"] },
+      // Hide the master account from every admin except the master itself
+      ...(isMasterViewing ? {} : { email: { not: MASTER_ADMIN_EMAIL } }),
+    },
     orderBy: [{ status: "asc" }, { requestedAt: "desc" }],
   });
 
