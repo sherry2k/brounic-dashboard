@@ -15,6 +15,7 @@ const projectUpdateSchema = z.object({
   notes: z.string().optional(),
   poNumber: z.string().optional(),
   contractValue: z.coerce.number().optional(),
+  receivedAmount: z.coerce.number().optional(),
 });
 
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
@@ -31,7 +32,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
 
   const {
     projectName, client, plotNo, location, contractDate, overallStatus,
-    shopDrawingStatus, notes, poNumber, contractValue,
+    shopDrawingStatus, notes, poNumber, contractValue, receivedAmount,
   } = parsed.data;
 
   const project = await prisma.project.update({
@@ -47,6 +48,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       notes: notes || null,
       poNumber: poNumber || null,
       contractValue: contractValue ?? null,
+      receivedAmount: receivedAmount ?? null,
     },
   });
 

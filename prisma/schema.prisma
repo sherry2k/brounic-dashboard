@@ -115,6 +115,7 @@ model Project {
 
   poNumber      String?
   contractValue Float?
+  receivedAmount Float?
   scopeOfWork   String?
   stage         ProjectStage @default(QUOTATION)
 
@@ -171,6 +172,18 @@ model ProjectProgressItem {
   updatedAt DateTime @updatedAt
 }
 
+model MaintenanceProgressItem {
+  id               String         @id @default(cuid())
+  maintenanceJobId String
+  maintenanceJob   MaintenanceJob @relation(fields: [maintenanceJobId], references: [id], onDelete: Cascade)
+  label            String
+  completed        Boolean        @default(false)
+  order            Int            @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 // ---------- Module 2: Maintenance ----------
 
 enum MaintenanceJobType {
@@ -195,6 +208,8 @@ model MaintenanceJob {
   location    String?
   contractDate DateTime?
   overallStatus OverallStatus    @default(ACTIVE)
+  contractValue  Float?
+  receivedAmount Float?
   siteId      String?
   site        Site?              @relation(fields: [siteId], references: [id])
   projectId   String?
@@ -204,6 +219,8 @@ model MaintenanceJob {
   description String
   partsUsed   String?
   resolutionNotes String?
+
+  progressItems MaintenanceProgressItem[]
 
   assignedToId String?
   assignedTo   User?  @relation("MaintenanceTechnician", fields: [assignedToId], references: [id])

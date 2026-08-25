@@ -2,8 +2,9 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Boxes, Search, Plus, ExternalLink, Pencil, Trash2 } from "lucide-react";
+import { Boxes, Search, Plus, ExternalLink, Pencil, Trash2, Download } from "lucide-react";
 import EditProjectModal from "./EditProjectModal";
+import { downloadCSV } from "@/lib/csv";
 
 const STATUS_STYLES: Record<string, string> = {
   ACTIVE: "bg-brounic-accent/30 text-brounic-orange",
@@ -61,6 +62,29 @@ export default function ProjectsListClient({ initialProjects }: { initialProject
   const avgProgress =
     total === 0 ? 0 : Math.round(projects.reduce((sum, p) => sum + progressOf(p), 0) / total);
 
+  function handleExport() {
+    const headers = [
+      "Project Name", "Client", "Plot No.", "Location", "Contract Date",
+      "Shop Drawing Status", "Status", "Progress %", "Contract Value",
+      "Received", "Due", "Notes",
+    ];
+    const rows = filtered.map((p) => {
+      const total = p.progressItems.length;
+      const doneCount = p.progressItems.filter((i: any) => i.completed).length;
+      const progress = total === 0 ? 0 : Math.round((doneCount / total) * 100);
+      const cv = p.contractValue ?? "";
+      const ra = p.receivedAmount ?? "";
+      const due = p.contractValue != null ? Number(p.contractValue) - Number(p.receivedAmount || 0) : "";
+      return [
+        p.projectName, p.client || "", p.plotNo || "", p.location || "",
+        p.contractDate ? new Date(p.contractDate).toLocaleDateString() : "",
+        DRAWING_LABELS[p.shopDrawingStatus], STATUS_LABELS[p.overallStatus], progress,
+        cv, ra, due, p.notes || "",
+      ];
+    });
+    downloadCSV(`brounic-projects-${new Date().toISOString().slice(0, 10)}.csv`, headers, rows);
+  }
+
   async function handleDelete(id: string) {
     if (!confirm("Delete this project? This can't be undone.")) return;
     const res = await fetch(`/api/projects/${id}`, { method: "DELETE" });
@@ -94,6 +118,12 @@ export default function ProjectsListClient({ initialProjects }: { initialProject
               className="pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brounic-orange focus:border-brounic-orange w-52"
             />
           </div>
+          <button
+            onClick={handleExport}
+            className="flex items-center gap-1.5 border border-gray-300 text-gray-600 hover:border-brounic-orange hover:text-brounic-orange rounded-md px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap"
+          >
+            <Download size={16} /> Export
+          </button>
           <button
             onClick={() => router.push("/dashboard/projects/new")}
             className="flex items-center gap-1.5 bg-brounic-orange hover:bg-brounic-black text-white rounded-md px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap"

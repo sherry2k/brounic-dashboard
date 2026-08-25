@@ -16,6 +16,7 @@ const projectSchema = z.object({
   notes: z.string().optional(),
   poNumber: z.string().optional(),
   contractValue: z.coerce.number().optional(),
+  receivedAmount: z.coerce.number().optional(),
 });
 
 export async function POST(req: Request) {
@@ -32,7 +33,7 @@ export async function POST(req: Request) {
 
   const {
     projectName, client, plotNo, location, contractDate, overallStatus,
-    shopDrawingStatus, notes, poNumber, contractValue,
+    shopDrawingStatus, notes, poNumber, contractValue, receivedAmount,
   } = parsed.data;
 
   const project = await prisma.project.create({
@@ -47,6 +48,7 @@ export async function POST(req: Request) {
       notes: notes || null,
       poNumber: poNumber || null,
       contractValue: contractValue ?? null,
+      receivedAmount: receivedAmount ?? null,
       stage: "QUOTATION",
       createdById: (session.user as any).id,
       progressItems: {

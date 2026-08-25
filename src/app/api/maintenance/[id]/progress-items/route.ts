@@ -25,32 +25,32 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   const parsed = addItemSchema.safeParse(body);
 
   if (parsed.success) {
-    const count = await prisma.projectProgressItem.count({ where: { projectId: params.id } });
-    const item = await prisma.projectProgressItem.create({
-      data: { projectId: params.id, label: parsed.data.label, order: count },
+    const count = await prisma.maintenanceProgressItem.count({ where: { maintenanceJobId: params.id } });
+    const item = await prisma.maintenanceProgressItem.create({
+      data: { maintenanceJobId: params.id, label: parsed.data.label, order: count },
     });
     return NextResponse.json({ ok: true, item });
   }
 
-  const existing = await prisma.projectProgressItem.count({ where: { projectId: params.id } });
+  const existing = await prisma.maintenanceProgressItem.count({ where: { maintenanceJobId: params.id } });
   if (existing > 0) {
-    const items = await prisma.projectProgressItem.findMany({
-      where: { projectId: params.id },
+    const items = await prisma.maintenanceProgressItem.findMany({
+      where: { maintenanceJobId: params.id },
       orderBy: { order: "asc" },
     });
     return NextResponse.json({ ok: true, alreadyExists: true, items });
   }
 
-  await prisma.projectProgressItem.createMany({
+  await prisma.maintenanceProgressItem.createMany({
     data: DEFAULT_PROGRESS_ITEMS.map((label, i) => ({
-      projectId: params.id,
+      maintenanceJobId: params.id,
       label,
       order: i,
     })),
   });
 
-  const items = await prisma.projectProgressItem.findMany({
-    where: { projectId: params.id },
+  const items = await prisma.maintenanceProgressItem.findMany({
+    where: { maintenanceJobId: params.id },
     orderBy: { order: "asc" },
   });
 

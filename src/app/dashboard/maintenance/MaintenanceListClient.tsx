@@ -2,8 +2,9 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Plus, ExternalLink, Pencil, Trash2 } from "lucide-react";
+import { Search, Plus, ExternalLink, Pencil, Trash2, Download } from "lucide-react";
 import EditMaintenanceModal from "./EditMaintenanceModal";
+import { downloadCSV } from "@/lib/csv";
 
 const STATUS_STYLES: Record<string, string> = {
   ACTIVE: "bg-brounic-accent/30 text-brounic-orange",
@@ -37,6 +38,23 @@ export default function MaintenanceListClient({ initialJobs }: { initialJobs: an
   const total = jobs.length;
   const active = jobs.filter((j) => j.overallStatus === "ACTIVE").length;
 
+  function handleExport() {
+    const headers = [
+      "Job Name", "Client", "Plot No.", "Location", "Contract Date",
+      "Job Type", "Status", "Contract Value", "Received", "Due", "Description",
+    ];
+    const rows = filtered.map((j) => {
+      const due = j.contractValue != null ? Number(j.contractValue) - Number(j.receivedAmount || 0) : "";
+      return [
+        j.jobName, j.client || "", j.plotNo || "", j.location || "",
+        j.contractDate ? new Date(j.contractDate).toLocaleDateString() : "",
+        j.jobType, STATUS_LABELS[j.overallStatus],
+        j.contractValue ?? "", j.receivedAmount ?? "", due, j.description || "",
+      ];
+    });
+    downloadCSV(`brounic-maintenance-${new Date().toISOString().slice(0, 10)}.csv`, headers, rows);
+  }
+
   async function handleDelete(id: string) {
     if (!confirm("Delete this maintenance job? This can't be undone.")) return;
     const res = await fetch(`/api/maintenance/${id}`, { method: "DELETE" });
@@ -68,6 +86,12 @@ export default function MaintenanceListClient({ initialJobs }: { initialJobs: an
               className="pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brounic-orange focus:border-brounic-orange w-52"
             />
           </div>
+          <button
+            onClick={handleExport}
+            className="flex items-center gap-1.5 border border-gray-300 text-gray-600 hover:border-brounic-orange hover:text-brounic-orange rounded-md px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap"
+          >
+            <Download size={16} /> Export
+          </button>
           <button
             onClick={() => router.push("/dashboard/maintenance/new")}
             className="flex items-center gap-1.5 bg-brounic-orange hover:bg-brounic-black text-white rounded-md px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap"

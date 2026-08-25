@@ -2,9 +2,23 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Plus } from "lucide-react";
+import { Search, Plus, Download } from "lucide-react";
 import AMCContractCard from "./AMCContractCard";
 import EditAMCModal from "./EditAMCModal";
+import { downloadCSV } from "@/lib/csv";
+
+const VISIT_STATUS_LABEL: Record<string, string> = {
+  UPCOMING: "Pending",
+  DUE: "Pending",
+  OVERDUE: "Overdue",
+  COMPLETED: "Completed",
+};
+
+const OVERALL_LABEL: Record<string, string> = {
+  ACTIVE: "Active",
+  COMPLETED: "Completed",
+  ON_HOLD: "On Hold",
+};
 
 export default function AMCListClient({
   initialContracts,
@@ -77,6 +91,23 @@ export default function AMCListClient({
     });
   }
 
+  function handleExport() {
+    const headers = [
+      "Project Name", "Client", "Location", "Contract Start", "Contract End",
+      "Contract Status", "Quarter", "Visit Due Date", "Visit Status",
+    ];
+    const rows = filtered.flatMap((c) =>
+      c.visits.map((v: any) => [
+        c.projectName, c.client || "", c.location || "",
+        new Date(c.contractStart).toLocaleDateString(),
+        new Date(c.contractEnd).toLocaleDateString(),
+        OVERALL_LABEL[c.overallStatus],
+        v.quarter, new Date(v.dueDate).toLocaleDateString(), VISIT_STATUS_LABEL[v.status],
+      ])
+    );
+    downloadCSV(`brounic-amc-${new Date().toISOString().slice(0, 10)}.csv`, headers, rows);
+  }
+
   async function handleDeleteContract(id: string) {
     if (!confirm("Delete this AMC contract and all its visits? This can't be undone.")) return;
     const res = await fetch(`/api/amc/${id}`, { method: "DELETE" });
@@ -100,6 +131,12 @@ export default function AMCListClient({
               className="pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brounic-orange focus:border-brounic-orange w-52"
             />
           </div>
+          <button
+            onClick={handleExport}
+            className="flex items-center gap-1.5 border border-gray-300 text-gray-600 hover:border-brounic-orange hover:text-brounic-orange rounded-md px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap"
+          >
+            <Download size={16} /> Export
+          </button>
           <button
             onClick={() => router.push("/dashboard/amc/new")}
             className="flex items-center gap-1.5 bg-brounic-orange hover:bg-brounic-black text-white rounded-md px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap"

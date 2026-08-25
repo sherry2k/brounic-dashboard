@@ -13,6 +13,8 @@ const maintenanceUpdateSchema = z.object({
   overallStatus: z.enum(["ACTIVE", "COMPLETED", "ON_HOLD"]),
   jobType: z.enum(["REACTIVE", "SCHEDULED", "WARRANTY"]).optional(),
   description: z.string().optional(),
+  contractValue: z.coerce.number().optional(),
+  receivedAmount: z.coerce.number().optional(),
 });
 
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
@@ -27,7 +29,10 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     return NextResponse.json({ error: "Invalid input" }, { status: 400 });
   }
 
-  const { jobName, client, plotNo, location, contractDate, overallStatus, jobType, description } = parsed.data;
+  const {
+    jobName, client, plotNo, location, contractDate, overallStatus, jobType,
+    description, contractValue, receivedAmount,
+  } = parsed.data;
 
   const job = await prisma.maintenanceJob.update({
     where: { id: params.id },
@@ -40,6 +45,8 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       overallStatus,
       ...(jobType ? { jobType } : {}),
       ...(description ? { description } : {}),
+      contractValue: contractValue ?? null,
+      receivedAmount: receivedAmount ?? null,
     },
   });
 

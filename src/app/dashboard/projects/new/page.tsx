@@ -22,6 +22,7 @@ export default function NewProjectPage() {
     notes: "",
     poNumber: "",
     contractValue: "",
+    receivedAmount: "",
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -158,6 +159,19 @@ export default function NewProjectPage() {
               className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brounic-orange focus:border-brounic-orange"
               value={form.contractValue}
               onChange={(e) => setForm({ ...form, contractValue: e.target.value })}
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm mb-1 text-brounic-dark">Received amount (optional)</label>
+            <input
+              type="number"
+              step="0.01"
+              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brounic-orange focus:border-brounic-orange"
+              value={form.receivedAmount}
+              onChange={(e) => setForm({ ...form, receivedAmount: e.target.value })}
             />
           </div>
         </div>
