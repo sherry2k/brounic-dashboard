@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Pencil, Trash2, Save, X, User, MapPin, CalendarDays, RefreshCw } from "lucide-react";
+import { Pencil, Trash2, Save, X, User, MapPin, CalendarDays, ChevronDown, ChevronRight } from "lucide-react";
 
 const STATUS_BADGE: Record<string, string> = {
   UPCOMING: "bg-brounic-accent/30 text-brounic-orange",
@@ -15,6 +15,13 @@ const STATUS_LABEL: Record<string, string> = {
   DUE: "Pending",
   OVERDUE: "Overdue",
   COMPLETED: "Completed",
+};
+
+const STATUS_DOT: Record<string, string> = {
+  UPCOMING: "bg-brounic-orange",
+  DUE: "bg-brounic-orange",
+  OVERDUE: "bg-red-500",
+  COMPLETED: "bg-green-500",
 };
 
 const OVERALL_STATUS_BADGE: Record<string, string> = {
@@ -76,20 +83,20 @@ function VisitRow({
 
   if (editing) {
     return (
-      <div className="flex flex-wrap items-center gap-2 bg-gray-50 rounded-md px-3 py-3">
-        <div className="w-8 h-8 rounded-md bg-brounic-black text-white text-xs font-medium flex items-center justify-center shrink-0">
+      <div className="flex flex-wrap items-center gap-2 bg-gray-50 rounded-md px-3 py-2.5">
+        <div className="w-7 h-7 rounded-md bg-brounic-black text-white text-[11px] font-medium flex items-center justify-center shrink-0">
           {visit.quarter}
         </div>
         <input
           type="date"
           value={dueDate}
           onChange={(e) => setDueDate(e.target.value)}
-          className="border border-gray-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brounic-orange focus:border-brounic-orange"
+          className="border border-gray-300 rounded-md px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-brounic-orange focus:border-brounic-orange"
         />
         <select
           value={status}
           onChange={(e) => setStatus(e.target.value)}
-          className="border border-gray-300 rounded-md px-2 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brounic-orange focus:border-brounic-orange"
+          className="border border-gray-300 rounded-md px-2 py-1 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-brounic-orange focus:border-brounic-orange"
         >
           {VISIT_STATUS_OPTIONS.map((opt) => (
             <option key={opt.value} value={opt.value}>
@@ -100,37 +107,37 @@ function VisitRow({
         <button
           onClick={handleSave}
           disabled={saving}
-          className="flex items-center gap-1 bg-brounic-black hover:bg-brounic-orange text-white rounded-md px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50"
+          className="flex items-center gap-1 bg-brounic-black hover:bg-brounic-orange text-white rounded-md px-2.5 py-1 text-xs font-medium transition-colors disabled:opacity-50"
         >
-          <Save size={12} /> {saving ? "Saving..." : "Save"}
+          <Save size={11} /> {saving ? "Saving..." : "Save"}
         </button>
         <button
           onClick={() => setEditing(false)}
-          className="flex items-center gap-1 border border-gray-300 rounded-md px-3 py-1.5 text-xs text-gray-600"
+          className="flex items-center gap-1 border border-gray-300 rounded-md px-2.5 py-1 text-xs text-gray-600"
         >
-          <X size={12} /> Cancel
+          <X size={11} /> Cancel
         </button>
       </div>
     );
   }
 
   return (
-    <div className="flex items-center justify-between bg-gray-50 rounded-md px-3 py-3">
+    <div className="flex items-center justify-between bg-gray-50 rounded-md px-3 py-2.5">
       <div className="flex items-center gap-3">
-        <div className="w-8 h-8 rounded-md bg-brounic-black text-white text-xs font-medium flex items-center justify-center shrink-0">
+        <div className="w-7 h-7 rounded-md bg-brounic-black text-white text-[11px] font-medium flex items-center justify-center shrink-0">
           {visit.quarter}
         </div>
-        <span className="text-sm text-brounic-black">{new Date(visit.dueDate).toLocaleDateString()}</span>
+        <span className="text-xs text-brounic-black">{new Date(visit.dueDate).toLocaleDateString()}</span>
       </div>
       <div className="flex items-center gap-2">
-        <span className={`text-xs px-2 py-1 rounded-full font-medium ${STATUS_BADGE[visit.status]}`}>
+        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_BADGE[visit.status]}`}>
           {STATUS_LABEL[visit.status]}
         </span>
-        <button onClick={() => setEditing(true)} className="p-1.5 text-gray-400 hover:text-brounic-black">
-          <Pencil size={14} />
+        <button onClick={() => setEditing(true)} className="p-1 text-gray-400 hover:text-brounic-black">
+          <Pencil size={13} />
         </button>
-        <button onClick={handleDelete} className="p-1.5 text-gray-400 hover:text-red-600">
-          <Trash2 size={14} />
+        <button onClick={handleDelete} className="p-1 text-gray-400 hover:text-red-600">
+          <Trash2 size={13} />
         </button>
       </div>
     </div>
@@ -150,55 +157,82 @@ export default function AMCContractCard({
   onVisitUpdated: (v: any) => void;
   onVisitDeleted: (id: string) => void;
 }) {
+  const [expanded, setExpanded] = useState(false);
+
   return (
-    <div className="border border-gray-200 rounded-lg bg-white p-5 space-y-4">
-      <div className="flex items-start justify-between">
-        <h3 className="text-base font-semibold text-brounic-black">{contract.projectName}</h3>
-        <span className={`text-xs px-2 py-1 rounded-full font-medium ${OVERALL_STATUS_BADGE[contract.overallStatus]}`}>
-          {OVERALL_STATUS_LABEL[contract.overallStatus]}
-        </span>
-      </div>
+    <div className="border border-gray-200 rounded-lg bg-white overflow-hidden">
+      <button
+        onClick={() => setExpanded((e) => !e)}
+        className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left hover:bg-gray-50"
+      >
+        <div className="flex items-center gap-3 min-w-0">
+          {expanded ? (
+            <ChevronDown size={16} className="text-gray-400 shrink-0" />
+          ) : (
+            <ChevronRight size={16} className="text-gray-400 shrink-0" />
+          )}
+          <div className="min-w-0">
+            <div className="text-sm font-medium text-brounic-black truncate">{contract.projectName}</div>
+            <div className="text-xs text-gray-400 truncate">
+              {contract.client || "—"} · {contract.location || "—"}
+            </div>
+          </div>
+        </div>
+        <div className="flex items-center gap-3 shrink-0">
+          <div className="hidden sm:flex items-center gap-1">
+            {contract.visits.map((v: any) => (
+              <span
+                key={v.id}
+                title={`${v.quarter}: ${STATUS_LABEL[v.status]}`}
+                className={`w-2.5 h-2.5 rounded-full ${STATUS_DOT[v.status]}`}
+              />
+            ))}
+          </div>
+          <span className={`text-xs px-2 py-1 rounded-full font-medium whitespace-nowrap ${OVERALL_STATUS_BADGE[contract.overallStatus]}`}>
+            {OVERALL_STATUS_LABEL[contract.overallStatus]}
+          </span>
+        </div>
+      </button>
 
-      <div className="space-y-1.5 text-sm text-gray-500">
-        <div className="flex items-center gap-2">
-          <User size={14} className="text-brounic-orange shrink-0" />
-          {contract.client || "—"}
-        </div>
-        <div className="flex items-center gap-2">
-          <MapPin size={14} className="text-brounic-orange shrink-0" />
-          {contract.location || "—"}
-        </div>
-        <div className="flex items-center gap-2">
-          <CalendarDays size={14} className="text-brounic-orange shrink-0" />
-          Contract: {new Date(contract.contractStart).toLocaleDateString()}
-        </div>
-      </div>
+      {expanded && (
+        <div className="px-4 pb-4 space-y-4 border-t border-gray-100 pt-4">
+          <div className="space-y-1.5 text-sm text-gray-500">
+            <div className="flex items-center gap-2">
+              <User size={14} className="text-brounic-orange shrink-0" />
+              {contract.client || "—"}
+            </div>
+            <div className="flex items-center gap-2">
+              <MapPin size={14} className="text-brounic-orange shrink-0" />
+              {contract.location || "—"}
+            </div>
+            <div className="flex items-center gap-2">
+              <CalendarDays size={14} className="text-brounic-orange shrink-0" />
+              Contract: {new Date(contract.contractStart).toLocaleDateString()}
+            </div>
+          </div>
 
-      <div>
-        <div className="flex items-center gap-2 text-xs text-gray-500 uppercase tracking-wide mb-2">
-          <RefreshCw size={12} /> {contract.visits.length} Annual Visits
-        </div>
-        <div className="space-y-2">
-          {contract.visits.map((visit: any) => (
-            <VisitRow key={visit.id} visit={visit} onUpdated={onVisitUpdated} onDeleted={onVisitDeleted} />
-          ))}
-        </div>
-      </div>
+          <div className="space-y-2">
+            {contract.visits.map((visit: any) => (
+              <VisitRow key={visit.id} visit={visit} onUpdated={onVisitUpdated} onDeleted={onVisitDeleted} />
+            ))}
+          </div>
 
-      <div className="flex items-center gap-3 pt-2 border-t border-gray-100">
-        <button
-          onClick={onEditContract}
-          className="flex-1 flex items-center justify-center gap-2 bg-brounic-black hover:bg-brounic-orange text-white rounded-md px-4 py-2.5 text-sm font-medium transition-colors"
-        >
-          <Pencil size={14} /> Edit Contract
-        </button>
-        <button
-          onClick={onDeleteContract}
-          className="flex items-center justify-center gap-2 border border-gray-300 rounded-md px-4 py-2.5 text-sm text-gray-600 hover:border-red-300 hover:text-red-600"
-        >
-          <Trash2 size={14} /> Delete
-        </button>
-      </div>
+          <div className="flex items-center gap-3 pt-2 border-t border-gray-100">
+            <button
+              onClick={onEditContract}
+              className="flex-1 flex items-center justify-center gap-2 bg-brounic-black hover:bg-brounic-orange text-white rounded-md px-4 py-2 text-sm font-medium transition-colors"
+            >
+              <Pencil size={14} /> Edit Contract
+            </button>
+            <button
+              onClick={onDeleteContract}
+              className="flex items-center justify-center gap-2 border border-gray-300 rounded-md px-4 py-2 text-sm text-gray-600 hover:border-red-300 hover:text-red-600"
+            >
+              <Trash2 size={14} /> Delete
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

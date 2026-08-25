@@ -9,6 +9,13 @@ const STATUS_OPTIONS = [
   { value: "ON_HOLD", label: "On Hold" },
 ];
 
+const DRAWING_OPTIONS = [
+  { value: "NOT_STARTED", label: "Not Started" },
+  { value: "IN_PROGRESS", label: "In Progress" },
+  { value: "NEEDS_REVIEW", label: "Needs Review" },
+  { value: "APPROVED", label: "Approved" },
+];
+
 function toDateInputValue(iso: string | null) {
   if (!iso) return "";
   return new Date(iso).toISOString().slice(0, 10);
@@ -31,6 +38,7 @@ export default function EditProjectModal({
     location: project.location ?? "",
     contractDate: toDateInputValue(project.contractDate),
     overallStatus: project.overallStatus ?? "ACTIVE",
+    shopDrawingStatus: project.shopDrawingStatus ?? "NOT_STARTED",
     notes: project.notes ?? "",
   });
   const [items, setItems] = useState<any[]>(project.progressItems ?? []);
@@ -165,6 +173,23 @@ export default function EditProjectModal({
               ))}
             </select>
           </div>
+        </div>
+
+        <div>
+          <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
+            Shop Drawing Status
+          </label>
+          <select
+            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brounic-orange focus:border-brounic-orange bg-white"
+            value={form.shopDrawingStatus}
+            onChange={(e) => setForm({ ...form, shopDrawingStatus: e.target.value })}
+          >
+            {DRAWING_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div>

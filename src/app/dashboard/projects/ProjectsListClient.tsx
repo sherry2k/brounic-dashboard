@@ -17,6 +17,20 @@ const STATUS_LABELS: Record<string, string> = {
   ON_HOLD: "On Hold",
 };
 
+const DRAWING_STYLES: Record<string, string> = {
+  NOT_STARTED: "bg-gray-100 text-gray-600",
+  IN_PROGRESS: "bg-brounic-accent/30 text-brounic-orange",
+  NEEDS_REVIEW: "bg-red-100 text-red-700",
+  APPROVED: "bg-green-100 text-green-700",
+};
+
+const DRAWING_LABELS: Record<string, string> = {
+  NOT_STARTED: "Not Started",
+  IN_PROGRESS: "In Progress",
+  NEEDS_REVIEW: "Needs Review",
+  APPROVED: "Approved",
+};
+
 function progressOf(project: any) {
   const total = project.progressItems.length;
   if (total === 0) return 0;
@@ -117,6 +131,7 @@ export default function ProjectsListClient({ initialProjects }: { initialProject
               <th className="px-4 py-3 font-normal">Client</th>
               <th className="px-4 py-3 font-normal">Location</th>
               <th className="px-4 py-3 font-normal">Contract</th>
+              <th className="px-4 py-3 font-normal">Shop Drawing</th>
               <th className="px-4 py-3 font-normal">Status</th>
               <th className="px-4 py-3 font-normal">Progress</th>
               <th className="px-4 py-3 font-normal text-right">Actions</th>
@@ -149,6 +164,11 @@ export default function ProjectsListClient({ initialProjects }: { initialProject
                   <td className="px-4 py-3 text-gray-600">{p.location || "—"}</td>
                   <td className="px-4 py-3 text-gray-600">
                     {p.contractDate ? new Date(p.contractDate).toLocaleDateString() : "—"}
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className={`text-xs px-2 py-1 rounded-full ${DRAWING_STYLES[p.shopDrawingStatus]}`}>
+                      {DRAWING_LABELS[p.shopDrawingStatus]}
+                    </span>
                   </td>
                   <td className="px-4 py-3">
                     <span className={`text-xs px-2 py-1 rounded-full ${STATUS_STYLES[p.overallStatus]}`}>
@@ -193,7 +213,7 @@ export default function ProjectsListClient({ initialProjects }: { initialProject
             })}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-6 text-center text-gray-400">
+                <td colSpan={8} className="px-4 py-6 text-center text-gray-400">
                   {search ? "No projects match your search." : "No projects yet."}
                 </td>
               </tr>
