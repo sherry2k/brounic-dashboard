@@ -4,17 +4,14 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-const projectUpdateSchema = z.object({
+const amcUpdateSchema = z.object({
   projectName: z.string().min(1),
   client: z.string().optional(),
-  plotNo: z.string().optional(),
   location: z.string().optional(),
-  contractDate: z.coerce.date().optional(),
+  contractStart: z.coerce.date(),
   overallStatus: z.enum(["ACTIVE", "COMPLETED", "ON_HOLD"]),
-  shopDrawingStatus: z.enum(["NOT_STARTED", "IN_PROGRESS", "NEEDS_REVIEW", "APPROVED"]).optional(),
-  notes: z.string().optional(),
-  poNumber: z.string().optional(),
-  contractValue: z.coerce.number().optional(),
+  projectId: z.string().nullable().optional(),
+  remarks: z.string().optional(),
 });
 
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
@@ -24,33 +21,27 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   }
 
   const body = await req.json();
-  const parsed = projectUpdateSchema.safeParse(body);
+  const parsed = amcUpdateSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: "Invalid input" }, { status: 400 });
   }
 
-  const {
-    projectName, client, plotNo, location, contractDate, overallStatus,
-    shopDrawingStatus, notes, poNumber, contractValue,
-  } = parsed.data;
+  const { projectName, client, location, contractStart, overallStatus, projectId, remarks } = parsed.data;
 
-  const project = await prisma.project.update({
+  const contract = await prisma.aMCContract.update({
     where: { id: params.id },
     data: {
       projectName,
       client: client || null,
-      plotNo: plotNo || null,
       location: location || null,
-      contractDate: contractDate ?? null,
+      contractStart,
       overallStatus,
-      ...(shopDrawingStatus ? { shopDrawingStatus } : {}),
-      notes: notes || null,
-      poNumber: poNumber || null,
-      contractValue: contractValue ?? null,
+      projectId: projectId || null,
+      remarks: remarks || null,
     },
   });
 
-  return NextResponse.json({ ok: true, project });
+  return NextResponse.json({ ok: true, contract });
 }
 
 export async function DELETE(req: Request, { params }: { params: { id: string } }) {
@@ -59,7 +50,7 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  await prisma.project.delete({ where: { id: params.id } });
+  await prisma.aMCContract.delete({ where: { id: params.id } });
 
   return NextResponse.json({ ok: true });
 }

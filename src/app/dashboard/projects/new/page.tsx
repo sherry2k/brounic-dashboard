@@ -14,8 +14,10 @@ export default function NewProjectPage() {
   const router = useRouter();
   const [form, setForm] = useState({
     projectName: "",
+    client: "",
     plotNo: "",
     location: "",
+    contractDate: "",
     shopDrawingStatus: "NOT_STARTED",
     notes: "",
     poNumber: "",
@@ -69,6 +71,27 @@ export default function NewProjectPage() {
             onChange={(e) => setForm({ ...form, projectName: e.target.value })}
             placeholder="e.g. One Pice Transport Gen. Contracting"
           />
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm mb-1 text-brounic-dark">Client</label>
+            <input
+              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brounic-orange focus:border-brounic-orange"
+              value={form.client}
+              onChange={(e) => setForm({ ...form, client: e.target.value })}
+              placeholder="e.g. Mr Mohamed"
+            />
+          </div>
+          <div>
+            <label className="block text-sm mb-1 text-brounic-dark">Contract date</label>
+            <input
+              type="date"
+              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brounic-orange focus:border-brounic-orange"
+              value={form.contractDate}
+              onChange={(e) => setForm({ ...form, contractDate: e.target.value })}
+            />
+          </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

@@ -13,8 +13,10 @@ export default function NewMaintenancePage() {
   const router = useRouter();
   const [form, setForm] = useState({
     jobName: "",
+    client: "",
     plotNo: "",
     location: "",
+    contractDate: "",
     jobType: "REACTIVE",
     description: "",
   });
@@ -55,13 +57,33 @@ export default function NewMaintenancePage() {
         className="space-y-4 bg-white border border-gray-200 rounded-lg p-6"
       >
         <div>
-          <label className="block text-sm mb-1 text-brounic-dark">Project / client name</label>
+          <label className="block text-sm mb-1 text-brounic-dark">Project name</label>
           <input
             required
             className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brounic-orange focus:border-brounic-orange"
             value={form.jobName}
             onChange={(e) => setForm({ ...form, jobName: e.target.value })}
           />
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm mb-1 text-brounic-dark">Client</label>
+            <input
+              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brounic-orange focus:border-brounic-orange"
+              value={form.client}
+              onChange={(e) => setForm({ ...form, client: e.target.value })}
+            />
+          </div>
+          <div>
+            <label className="block text-sm mb-1 text-brounic-dark">Contract date</label>
+            <input
+              type="date"
+              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brounic-orange focus:border-brounic-orange"
+              value={form.contractDate}
+              onChange={(e) => setForm({ ...form, contractDate: e.target.value })}
+            />
+          </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

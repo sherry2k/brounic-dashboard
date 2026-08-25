@@ -7,6 +7,7 @@ export default function NewAMCPage() {
   const router = useRouter();
   const [form, setForm] = useState({
     projectName: "",
+    client: "",
     plotNo: "",
     location: "",
     contractValue: "",
@@ -60,6 +61,15 @@ export default function NewAMCPage() {
             className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brounic-orange focus:border-brounic-orange"
             value={form.projectName}
             onChange={(e) => setForm({ ...form, projectName: e.target.value })}
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm mb-1 text-brounic-dark">Client</label>
+          <input
+            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brounic-orange focus:border-brounic-orange"
+            value={form.client}
+            onChange={(e) => setForm({ ...form, client: e.target.value })}
           />
         </div>
 

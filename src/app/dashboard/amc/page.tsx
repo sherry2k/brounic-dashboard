@@ -1,67 +1,29 @@
-import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import AMCListClient from "./AMCListClient";
 
 export default async function AMCPage() {
-  const contracts = await prisma.aMCContract.findMany({
-    include: { visits: true },
-    orderBy: { contractEnd: "asc" },
-  });
+  const [contracts, projects] = await Promise.all([
+    prisma.aMCContract.findMany({
+      include: { visits: { orderBy: { dueDate: "asc" } } },
+      orderBy: { contractEnd: "asc" },
+    }),
+    prisma.project.findMany({ select: { id: true, projectName: true }, orderBy: { projectName: "asc" } }),
+  ]);
 
-  return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-lg font-medium text-brounic-black">AMC contracts</h1>
-        <Link
-          href="/dashboard/amc/new"
-          className="bg-brounic-orange hover:bg-brounic-black text-white rounded-md px-4 py-2 text-sm font-medium transition-colors"
-        >
-          + Add AMC contract
-        </Link>
-      </div>
+  const serializable = contracts.map((c) => ({
+    ...c,
+    contractStart: c.contractStart.toISOString(),
+    contractEnd: c.contractEnd.toISOString(),
+    createdAt: c.createdAt.toISOString(),
+    updatedAt: c.updatedAt.toISOString(),
+    visits: c.visits.map((v) => ({
+      ...v,
+      dueDate: v.dueDate.toISOString(),
+      completedAt: v.completedAt ? v.completedAt.toISOString() : null,
+      createdAt: v.createdAt.toISOString(),
+      updatedAt: v.updatedAt.toISOString(),
+    })),
+  }));
 
-      <div className="border border-gray-200 rounded-lg bg-white overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead className="bg-gray-50 text-left text-gray-500">
-            <tr>
-              <th className="px-4 py-2 font-normal">Project name</th>
-              <th className="px-4 py-2 font-normal">Plot no.</th>
-              <th className="px-4 py-2 font-normal">Contract period</th>
-              <th className="px-4 py-2 font-normal">Visits completed</th>
-              <th className="px-4 py-2 font-normal">Overdue</th>
-            </tr>
-          </thead>
-          <tbody>
-            {contracts.map((c) => {
-              const completed = c.visits.filter((v) => v.status === "COMPLETED").length;
-              const overdue = c.visits.filter((v) => v.status === "OVERDUE").length;
-              return (
-                <tr key={c.id} className="border-t hover:bg-gray-50">
-                  <td className="px-4 py-3">
-                    <Link href={`/dashboard/amc/${c.id}`} className="underline text-brounic-black">
-                      {c.projectName}
-                    </Link>
-                  </td>
-                  <td className="px-4 py-3">{c.plotNo ?? "—"}</td>
-                  <td className="px-4 py-3">
-                    {c.contractStart.toLocaleDateString()} – {c.contractEnd.toLocaleDateString()}
-                  </td>
-                  <td className="px-4 py-3">
-                    {completed}/{c.visitsPerYear}
-                  </td>
-                  <td className="px-4 py-3">{overdue > 0 ? overdue : "—"}</td>
-                </tr>
-              );
-            })}
-            {contracts.length === 0 && (
-              <tr>
-                <td colSpan={5} className="px-4 py-6 text-center text-gray-400">
-                  No AMC contracts yet.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
+  return <AMCListClient initialContracts={serializable} projects={projects} />;
 }

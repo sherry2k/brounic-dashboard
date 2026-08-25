@@ -6,6 +6,7 @@ import { createAMCContractWithVisits } from "@/lib/amc";
 
 const amcSchema = z.object({
   projectName: z.string().min(1),
+  client: z.string().optional(),
   plotNo: z.string().optional(),
   location: z.string().optional(),
   contractValue: z.coerce.number().optional(),
@@ -25,13 +26,14 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid input" }, { status: 400 });
   }
 
-  const { projectName, plotNo, location, contractValue, contractStart, remarks } = parsed.data;
+  const { projectName, client, plotNo, location, contractValue, contractStart, remarks } = parsed.data;
 
   const contractEnd = new Date(contractStart);
   contractEnd.setFullYear(contractEnd.getFullYear() + 1);
 
   const contract = await createAMCContractWithVisits({
     projectName,
+    client,
     plotNo,
     location,
     contractValue,

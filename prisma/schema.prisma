@@ -7,9 +7,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
- directUrl = env("DIRECT_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 // ---------- Auth / Users ----------
@@ -91,11 +91,20 @@ enum ShopDrawingStatus {
   APPROVED
 }
 
+enum OverallStatus {
+  ACTIVE
+  COMPLETED
+  ON_HOLD
+}
+
 model Project {
   id                String            @id @default(cuid())
   projectName       String
+  client            String?
   plotNo            String?
   location          String?
+  contractDate      DateTime?
+  overallStatus     OverallStatus     @default(ACTIVE)
   shopDrawingStatus ShopDrawingStatus @default(NOT_STARTED)
   notes             String?
 
@@ -113,6 +122,7 @@ model Project {
   createdBy   User   @relation("ProjectCreatedBy", fields: [createdById], references: [id])
 
   shopDrawings ShopDrawing[]
+  progressItems ProjectProgressItem[]
 
   // once completed, a project can spawn linked maintenance/AMC records
   maintenanceJobs MaintenanceJob[]
@@ -133,7 +143,7 @@ enum DrawingStatus {
 model ShopDrawing {
   id            String        @id @default(cuid())
   projectId     String
-  project       Project       @relation(fields: [projectId], references: [id])
+  project       Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
   drawingNumber String
   revision      Int           @default(1)
   status        DrawingStatus @default(DRAFT)
@@ -141,6 +151,21 @@ model ShopDrawing {
   reviewedAt    DateTime?
   reviewerNotes String?
   fileUrl       String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Installation progress checklist — e.g. FACP installation, PVC piping,
+// device installation, fire pump installation, MCP, fire pump power supply.
+// Project progress % is derived from completed / total items.
+model ProjectProgressItem {
+  id        String  @id @default(cuid())
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  label     String
+  completed Boolean @default(false)
+  order     Int     @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -165,12 +190,15 @@ enum MaintenanceStatus {
 model MaintenanceJob {
   id          String             @id @default(cuid())
   jobName     String
+  client      String?
   plotNo      String?
   location    String?
+  contractDate DateTime?
+  overallStatus OverallStatus    @default(ACTIVE)
   siteId      String?
   site        Site?              @relation(fields: [siteId], references: [id])
   projectId   String?
-  project     Project?           @relation(fields: [projectId], references: [id])
+  project     Project?           @relation(fields: [projectId], references: [id], onDelete: SetNull)
   jobType     MaintenanceJobType @default(REACTIVE)
   status      MaintenanceStatus  @default(REPORTED)
   description String
@@ -192,12 +220,14 @@ model MaintenanceJob {
 model AMCContract {
   id             String   @id @default(cuid())
   projectName    String
+  client         String?
   plotNo         String?
   location       String?
+  overallStatus  OverallStatus @default(ACTIVE)
   siteId         String?
   site           Site?    @relation(fields: [siteId], references: [id])
   projectId      String?
-  project        Project? @relation(fields: [projectId], references: [id])
+  project        Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
   contractValue  Float?
   contractStart  DateTime
   contractEnd    DateTime
@@ -227,7 +257,7 @@ enum QuarterLabel {
 model AMCVisit {
   id           String         @id @default(cuid())
   contractId   String
-  contract     AMCContract    @relation(fields: [contractId], references: [id])
+  contract     AMCContract    @relation(fields: [contractId], references: [id], onDelete: Cascade)
   quarter      QuarterLabel
   dueDate      DateTime
   status       AMCVisitStatus @default(UPCOMING)
@@ -262,7 +292,7 @@ enum ChecklistResult {
 model ChecklistItem {
   id          String          @id @default(cuid())
   visitId     String
-  visit       AMCVisit        @relation(fields: [visitId], references: [id])
+  visit       AMCVisit        @relation(fields: [visitId], references: [id], onDelete: Cascade)
   system      ChecklistSystem
   description String
   result      ChecklistResult @default(NOT_APPLICABLE)
@@ -286,7 +316,7 @@ enum NonConformanceStatus {
 model NonConformance {
   id              String                @id @default(cuid())
   checklistItemId String                @unique
-  checklistItem   ChecklistItem         @relation(fields: [checklistItemId], references: [id])
+  checklistItem   ChecklistItem         @relation(fields: [checklistItemId], references: [id], onDelete: Cascade)
   status          NonConformanceStatus  @default(OPEN)
   correctiveAction String?
   assignedNote    String?

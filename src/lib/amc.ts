@@ -29,10 +29,14 @@ export const DEFAULT_CHECKLIST_TEMPLATE: { system: string; description: string }
 /**
  * Creates an AMC contract along with its 4 quarterly visits (spaced ~90
  * days apart from the contract start date), each pre-populated with the
- * default checklist template.
+ * default checklist template. If the contract date is in the past (e.g.
+ * entering an already-running contract), any visit whose due date has
+ * already passed is automatically marked Completed — only future-dated
+ * visits stay Upcoming.
  */
 export async function createAMCContractWithVisits(input: {
   projectName: string;
+  client?: string;
   plotNo?: string;
   location?: string;
   contractValue?: number;
@@ -47,9 +51,12 @@ export async function createAMCContractWithVisits(input: {
     { label: "Q4", offsetDays: 270 },
   ];
 
+  const now = new Date();
+
   return prisma.aMCContract.create({
     data: {
       projectName: input.projectName,
+      client: input.client || null,
       plotNo: input.plotNo || null,
       location: input.location || null,
       contractValue: input.contractValue,
@@ -61,10 +68,12 @@ export async function createAMCContractWithVisits(input: {
         create: quarters.map((q) => {
           const dueDate = new Date(input.contractStart);
           dueDate.setDate(dueDate.getDate() + q.offsetDays);
+          const isPast = dueDate < now;
           return {
             quarter: q.label as any,
             dueDate,
-            status: "UPCOMING",
+            status: isPast ? "COMPLETED" : "UPCOMING",
+            completedAt: isPast ? dueDate : null,
             checklistItems: {
               create: DEFAULT_CHECKLIST_TEMPLATE.map((item) => ({
                 system: item.system as any,
