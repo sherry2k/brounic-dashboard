@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-// TEMPORARY diagnostic route — safe to expose (no credentials shown),
-// delete this file once the database mismatch is resolved.
+// TEMPORARY diagnostic route — delete once resolved.
 export async function GET() {
   let hostname = "unknown";
   try {
@@ -13,26 +12,36 @@ export async function GET() {
     hostname = "error reading env";
   }
 
-  let tableCheck: any = null;
+  const results: any = { connectedHost: hostname };
+
   try {
-    const result = await prisma.$queryRawUnsafe(
-      `SELECT to_regclass('public."ProjectProgressCategory"') as exists`
-    );
-    tableCheck = result;
+    results.projectCount = await prisma.project.count();
   } catch (e: any) {
-    tableCheck = { error: e.message };
+    results.projectCount = { error: e.message };
   }
 
-  let projectCount: any = null;
   try {
-    projectCount = await prisma.project.count();
+    results.categoryCount = await prisma.projectProgressCategory.count();
   } catch (e: any) {
-    projectCount = { error: e.message };
+    results.categoryCount = { error: e.message };
   }
 
-  return NextResponse.json({
-    connectedHost: hostname,
-    categoryTableCheck: tableCheck,
-    projectCount,
-  });
+  try {
+    results.maintenanceCategoryCount = await prisma.maintenanceProgressCategory.count();
+  } catch (e: any) {
+    results.maintenanceCategoryCount = { error: e.message };
+  }
+
+  try {
+    const firstProject = await prisma.project.findFirst({
+      include: { progressCategories: true },
+    });
+    results.sampleProjectWithCategories = firstProject
+      ? { id: firstProject.id, name: firstProject.projectName, categoryCount: firstProject.progressCategories.length }
+      : "no projects";
+  } catch (e: any) {
+    results.sampleProjectWithCategories = { error: e.message };
+  }
+
+  return NextResponse.json(results);
 }
