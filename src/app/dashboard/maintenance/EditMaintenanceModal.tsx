@@ -24,15 +24,27 @@ function CategorySection({
   category,
   jobId,
   onItemsChanged,
+  onCategoryDeleted,
 }: {
   category: any;
   jobId: string;
   onItemsChanged: (categoryId: string, items: any[]) => void;
+  onCategoryDeleted: (categoryId: string) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [newTask, setNewTask] = useState("");
+  const [deleting, setDeleting] = useState(false);
   const items = category.items ?? [];
   const done = items.filter((i: any) => i.completed).length;
+
+  async function deleteCategory(e: React.MouseEvent) {
+    e.stopPropagation();
+    if (!confirm(`Delete the entire "${category.label}" category and all ${items.length} of its tasks? This can't be undone.`)) return;
+    setDeleting(true);
+    const res = await fetch(`/api/maintenance/${jobId}/progress-categories/${category.id}`, { method: "DELETE" });
+    setDeleting(false);
+    if (res.ok) onCategoryDeleted(category.id);
+  }
 
   async function toggleItem(item: any) {
     const nextCompleted = !item.completed;
@@ -76,9 +88,20 @@ function CategorySection({
           {expanded ? <ChevronDown size={15} className="text-gray-400" /> : <ChevronRight size={15} className="text-gray-400" />}
           <span className="text-sm font-medium text-brounic-black">{category.label}</span>
         </div>
-        <span className="text-xs text-gray-500">
-          {items.length === 0 ? "No tasks" : `${done}/${items.length}`}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-500">
+            {items.length === 0 ? "No tasks" : `${done}/${items.length}`}
+          </span>
+          <button
+            type="button"
+            onClick={deleteCategory}
+            disabled={deleting}
+            className="p-1 text-gray-300 hover:text-red-600 disabled:opacity-50"
+            title="Delete category"
+          >
+            <Trash2 size={13} />
+          </button>
+        </div>
       </button>
 
       {expanded && (
@@ -177,6 +200,10 @@ export default function EditMaintenanceModal({
 
   function handleItemsChanged(categoryId: string, items: any[]) {
     setCategories((prev) => prev.map((c) => (c.id === categoryId ? { ...c, items } : c)));
+  }
+
+  function handleCategoryDeleted(categoryId: string) {
+    setCategories((prev) => prev.filter((c) => c.id !== categoryId));
   }
 
   const allItems = categories.flatMap((c) => c.items ?? []);
@@ -305,6 +332,7 @@ export default function EditMaintenanceModal({
                 category={cat}
                 jobId={job.id}
                 onItemsChanged={handleItemsChanged}
+                onCategoryDeleted={handleCategoryDeleted}
               />
             ))}
           </div>
