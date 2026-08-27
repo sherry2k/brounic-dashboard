@@ -32,10 +32,15 @@ const DRAWING_LABELS: Record<string, string> = {
   APPROVED: "Approved",
 };
 
+function allItems(project: any) {
+  return (project.progressCategories ?? []).flatMap((c: any) => c.items);
+}
+
 function progressOf(project: any) {
-  const total = project.progressItems.length;
+  const items = allItems(project);
+  const total = items.length;
   if (total === 0) return 0;
-  const done = project.progressItems.filter((i: any) => i.completed).length;
+  const done = items.filter((i: any) => i.completed).length;
   return Math.round((done / total) * 100);
 }
 
@@ -69,8 +74,9 @@ export default function ProjectsListClient({ initialProjects }: { initialProject
       "Received", "Due", "Notes",
     ];
     const rows = filtered.map((p) => {
-      const total = p.progressItems.length;
-      const doneCount = p.progressItems.filter((i: any) => i.completed).length;
+      const items = allItems(p);
+      const total = items.length;
+      const doneCount = items.filter((i: any) => i.completed).length;
       const progress = total === 0 ? 0 : Math.round((doneCount / total) * 100);
       const cv = p.contractValue ?? "";
       const ra = p.receivedAmount ?? "";
@@ -170,7 +176,8 @@ export default function ProjectsListClient({ initialProjects }: { initialProject
           <tbody>
             {filtered.map((p) => {
               const progress = progressOf(p);
-              const doneCount = p.progressItems.filter((i: any) => i.completed).length;
+              const pItems = allItems(p);
+              const doneCount = pItems.filter((i: any) => i.completed).length;
               return (
                 <tr
                   key={p.id}
@@ -185,7 +192,7 @@ export default function ProjectsListClient({ initialProjects }: { initialProject
                       <div>
                         <div className="text-brounic-black font-medium">{p.projectName}</div>
                         <div className="text-xs text-gray-400">
-                          {doneCount}/{p.progressItems.length} tasks
+                          {doneCount}/{pItems.length} tasks
                         </div>
                       </div>
                     </div>

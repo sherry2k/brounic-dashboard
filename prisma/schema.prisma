@@ -123,7 +123,7 @@ model Project {
   createdBy   User   @relation("ProjectCreatedBy", fields: [createdById], references: [id])
 
   shopDrawings ShopDrawing[]
-  progressItems ProjectProgressItem[]
+  progressCategories ProjectProgressCategory[]
 
   // once completed, a project can spawn linked maintenance/AMC records
   maintenanceJobs MaintenanceJob[]
@@ -160,25 +160,51 @@ model ShopDrawing {
 // Installation progress checklist — e.g. FACP installation, PVC piping,
 // device installation, fire pump installation, MCP, fire pump power supply.
 // Project progress % is derived from completed / total items.
-model ProjectProgressItem {
+model ProjectProgressCategory {
   id        String  @id @default(cuid())
   projectId String
   project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
   label     String
-  completed Boolean @default(false)
   order     Int     @default(0)
+
+  items ProjectProgressItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ProjectProgressItem {
+  id         String                   @id @default(cuid())
+  categoryId String
+  category   ProjectProgressCategory  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  label      String
+  completed  Boolean                  @default(false)
+  order      Int                      @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model MaintenanceProgressCategory {
+  id               String         @id @default(cuid())
+  maintenanceJobId String
+  maintenanceJob   MaintenanceJob @relation(fields: [maintenanceJobId], references: [id], onDelete: Cascade)
+  label            String
+  order            Int            @default(0)
+
+  items MaintenanceProgressItem[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model MaintenanceProgressItem {
-  id               String         @id @default(cuid())
-  maintenanceJobId String
-  maintenanceJob   MaintenanceJob @relation(fields: [maintenanceJobId], references: [id], onDelete: Cascade)
-  label            String
-  completed        Boolean        @default(false)
-  order            Int            @default(0)
+  id         String                       @id @default(cuid())
+  categoryId String
+  category   MaintenanceProgressCategory  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  label      String
+  completed  Boolean                      @default(false)
+  order      Int                          @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -220,7 +246,7 @@ model MaintenanceJob {
   partsUsed   String?
   resolutionNotes String?
 
-  progressItems MaintenanceProgressItem[]
+  progressCategories MaintenanceProgressCategory[]
 
   assignedToId String?
   assignedTo   User?  @relation("MaintenanceTechnician", fields: [assignedToId], references: [id])

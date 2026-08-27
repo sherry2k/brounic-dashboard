@@ -20,14 +20,18 @@ export default async function ProjectDetailPage({ params }: { params: { id: stri
     where: { id: params.id },
     include: {
       shopDrawings: { orderBy: { revision: "desc" } },
-      progressItems: { orderBy: { order: "asc" } },
+      progressCategories: {
+        orderBy: { order: "asc" },
+        include: { items: { orderBy: { order: "asc" } } },
+      },
     },
   });
 
   if (!project) notFound();
 
-  const total = project.progressItems.length;
-  const done = project.progressItems.filter((i) => i.completed).length;
+  const allItems = project.progressCategories.flatMap((c) => c.items);
+  const total = allItems.length;
+  const done = allItems.filter((i) => i.completed).length;
   const progress = total === 0 ? 0 : Math.round((done / total) * 100);
 
   return (
@@ -50,20 +54,29 @@ export default async function ProjectDetailPage({ params }: { params: { id: stri
 
       <section className="space-y-3">
         <h2 className="text-sm font-medium text-brounic-dark">Installation progress</h2>
-        <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-3">
+        <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
           <div className="flex items-center gap-3">
             <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
               <div className="h-full bg-brounic-orange rounded-full" style={{ width: `${progress}%` }} />
             </div>
             <span className="text-sm font-medium text-brounic-black w-10">{progress}%</span>
           </div>
-          <ul className="text-sm space-y-1">
-            {project.progressItems.map((item) => (
-              <li key={item.id} className={item.completed ? "line-through text-gray-400" : "text-brounic-black"}>
-                {item.label}
-              </li>
-            ))}
-          </ul>
+
+          {project.progressCategories.map((cat) => (
+            <div key={cat.id}>
+              <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
+                {cat.label} ({cat.items.filter((i) => i.completed).length}/{cat.items.length})
+              </div>
+              <ul className="text-sm space-y-1 pl-2">
+                {cat.items.map((item) => (
+                  <li key={item.id} className={item.completed ? "line-through text-gray-400" : "text-brounic-black"}>
+                    {item.label}
+                  </li>
+                ))}
+                {cat.items.length === 0 && <li className="text-gray-400 italic">No tasks yet</li>}
+              </ul>
+            </div>
+          ))}
         </div>
       </section>
 

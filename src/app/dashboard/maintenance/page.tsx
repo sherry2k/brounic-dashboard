@@ -5,7 +5,12 @@ import MaintenanceListClient from "./MaintenanceListClient";
 
 export default async function MaintenancePage() {
   const jobs = await prisma.maintenanceJob.findMany({
-    include: { progressItems: { orderBy: { order: "asc" } } },
+    include: {
+      progressCategories: {
+        orderBy: { order: "asc" },
+        include: { items: { orderBy: { order: "asc" } } },
+      },
+    },
     orderBy: { updatedAt: "desc" },
   });
 
@@ -16,10 +21,15 @@ export default async function MaintenancePage() {
     resolvedAt: j.resolvedAt ? j.resolvedAt.toISOString() : null,
     createdAt: j.createdAt.toISOString(),
     updatedAt: j.updatedAt.toISOString(),
-    progressItems: j.progressItems.map((i) => ({
-      ...i,
-      createdAt: i.createdAt.toISOString(),
-      updatedAt: i.updatedAt.toISOString(),
+    progressCategories: j.progressCategories.map((c) => ({
+      ...c,
+      createdAt: c.createdAt.toISOString(),
+      updatedAt: c.updatedAt.toISOString(),
+      items: c.items.map((i) => ({
+        ...i,
+        createdAt: i.createdAt.toISOString(),
+        updatedAt: i.updatedAt.toISOString(),
+      })),
     })),
   }));
 

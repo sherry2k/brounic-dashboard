@@ -5,7 +5,12 @@ import ProjectsListClient from "./ProjectsListClient";
 
 export default async function ProjectsPage() {
   const projects = await prisma.project.findMany({
-    include: { progressItems: { orderBy: { order: "asc" } } },
+    include: {
+      progressCategories: {
+        orderBy: { order: "asc" },
+        include: { items: { orderBy: { order: "asc" } } },
+      },
+    },
     orderBy: { updatedAt: "desc" },
   });
 
@@ -14,7 +19,16 @@ export default async function ProjectsPage() {
     contractDate: p.contractDate ? p.contractDate.toISOString() : null,
     createdAt: p.createdAt.toISOString(),
     updatedAt: p.updatedAt.toISOString(),
-    progressItems: p.progressItems.map((i) => ({ ...i, createdAt: i.createdAt.toISOString(), updatedAt: i.updatedAt.toISOString() })),
+    progressCategories: p.progressCategories.map((c) => ({
+      ...c,
+      createdAt: c.createdAt.toISOString(),
+      updatedAt: c.updatedAt.toISOString(),
+      items: c.items.map((i) => ({
+        ...i,
+        createdAt: i.createdAt.toISOString(),
+        updatedAt: i.updatedAt.toISOString(),
+      })),
+    })),
   }));
 
   return <ProjectsListClient initialProjects={serializable} />;

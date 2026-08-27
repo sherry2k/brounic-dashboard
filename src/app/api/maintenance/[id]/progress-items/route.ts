@@ -3,12 +3,18 @@ import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { DEFAULT_PROGRESS_ITEMS } from "@/lib/progress";
+import { DEFAULT_PROGRESS_STRUCTURE } from "@/lib/progress";
 
-const addItemSchema = z.object({ label: z.string().min(1) });
+const addItemSchema = z.object({ label: z.string().min(1), categoryId: z.string().min(1) });
 
-// With a body { label }, adds one custom checklist item.
-// With no body, idempotently seeds the default checklist (only if empty).
+async function getCategoriesWithItems(maintenanceJobId: string) {
+  return prisma.maintenanceProgressCategory.findMany({
+    where: { maintenanceJobId },
+    orderBy: { order: "asc" },
+    include: { items: { orderBy: { order: "asc" } } },
+  });
+}
+
 export async function POST(req: Request, { params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions);
   if (!session) {
@@ -25,34 +31,31 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   const parsed = addItemSchema.safeParse(body);
 
   if (parsed.success) {
-    const count = await prisma.maintenanceProgressItem.count({ where: { maintenanceJobId: params.id } });
+    const count = await prisma.maintenanceProgressItem.count({ where: { categoryId: parsed.data.categoryId } });
     const item = await prisma.maintenanceProgressItem.create({
-      data: { maintenanceJobId: params.id, label: parsed.data.label, order: count },
+      data: { categoryId: parsed.data.categoryId, label: parsed.data.label, order: count },
     });
     return NextResponse.json({ ok: true, item });
   }
 
-  const existing = await prisma.maintenanceProgressItem.count({ where: { maintenanceJobId: params.id } });
+  const existing = await prisma.maintenanceProgressCategory.count({ where: { maintenanceJobId: params.id } });
   if (existing > 0) {
-    const items = await prisma.maintenanceProgressItem.findMany({
-      where: { maintenanceJobId: params.id },
-      orderBy: { order: "asc" },
-    });
-    return NextResponse.json({ ok: true, alreadyExists: true, items });
+    const categories = await getCategoriesWithItems(params.id);
+    return NextResponse.json({ ok: true, alreadyExists: true, categories });
   }
 
-  await prisma.maintenanceProgressItem.createMany({
-    data: DEFAULT_PROGRESS_ITEMS.map((label, i) => ({
-      maintenanceJobId: params.id,
-      label,
-      order: i,
-    })),
-  });
+  for (let i = 0; i < DEFAULT_PROGRESS_STRUCTURE.length; i++) {
+    const { category, tasks } = DEFAULT_PROGRESS_STRUCTURE[i];
+    await prisma.maintenanceProgressCategory.create({
+      data: {
+        maintenanceJobId: params.id,
+        label: category,
+        order: i,
+        items: { create: tasks.map((label, j) => ({ label, order: j })) },
+      },
+    });
+  }
 
-  const items = await prisma.maintenanceProgressItem.findMany({
-    where: { maintenanceJobId: params.id },
-    orderBy: { order: "asc" },
-  });
-
-  return NextResponse.json({ ok: true, items });
+  const categories = await getCategoriesWithItems(params.id);
+  return NextResponse.json({ ok: true, categories });
 }

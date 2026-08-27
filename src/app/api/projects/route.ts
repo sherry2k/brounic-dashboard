@@ -3,7 +3,7 @@ import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { DEFAULT_PROGRESS_ITEMS } from "@/lib/progress";
+import { DEFAULT_PROGRESS_STRUCTURE } from "@/lib/progress";
 
 const projectSchema = z.object({
   projectName: z.string().min(1),
@@ -51,8 +51,12 @@ export async function POST(req: Request) {
       receivedAmount: receivedAmount ?? null,
       stage: "QUOTATION",
       createdById: (session.user as any).id,
-      progressItems: {
-        create: DEFAULT_PROGRESS_ITEMS.map((label, i) => ({ label, order: i })),
+      progressCategories: {
+        create: DEFAULT_PROGRESS_STRUCTURE.map((cat, i) => ({
+          label: cat.category,
+          order: i,
+          items: { create: cat.tasks.map((label, j) => ({ label, order: j })) },
+        })),
       },
     },
   });

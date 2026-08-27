@@ -19,7 +19,7 @@ function relativeDue(date: Date) {
 export default async function DashboardOverview() {
   const [projects, maintenanceJobs, amcContracts] = await Promise.all([
     prisma.project.findMany({
-      include: { progressItems: true },
+      include: { progressCategories: { include: { items: true } } },
       orderBy: { updatedAt: "desc" },
     }),
     prisma.maintenanceJob.findMany({ orderBy: { updatedAt: "desc" } }),
@@ -31,9 +31,10 @@ export default async function DashboardOverview() {
   const doneProjects = projects.filter((p) => p.overallStatus === "COMPLETED").length;
 
   const projectProgress = (p: (typeof projects)[number]) => {
-    const total = p.progressItems.length;
+    const items = p.progressCategories.flatMap((c) => c.items);
+    const total = items.length;
     if (total === 0) return 0;
-    const done = p.progressItems.filter((i) => i.completed).length;
+    const done = items.filter((i) => i.completed).length;
     return Math.round((done / total) * 100);
   };
   const avgInstallProgress =
