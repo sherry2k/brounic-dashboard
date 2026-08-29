@@ -3,19 +3,8 @@ export const dynamic = "force-dynamic";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { calculateOverallProgress } from "@/lib/progress";
-import { Boxes, Package, Wrench, CalendarCheck, ArrowUpRight, Clock } from "lucide-react";
-
-function daysUntil(date: Date) {
-  const diffMs = date.getTime() - new Date().setHours(0, 0, 0, 0);
-  return Math.round(diffMs / (1000 * 60 * 60 * 24));
-}
-
-function relativeDue(date: Date) {
-  const d = daysUntil(date);
-  if (d === 0) return "Today";
-  if (d < 0) return `${Math.abs(d)}d overdue`;
-  return `In ${d}d`;
-}
+import { Boxes, Package, Wrench, CalendarCheck, ArrowUpRight } from "lucide-react";
+import UpcomingAMCVisits from "./UpcomingAMCVisits";
 
 export default async function DashboardOverview() {
   const [projects, maintenanceJobs, amcContracts] = await Promise.all([
@@ -45,10 +34,28 @@ export default async function DashboardOverview() {
 
   const now = Date.now();
   const upcomingVisits = amcContracts
-    .flatMap((c) => c.visits.map((v) => ({ ...v, contractName: c.projectName })))
+    .flatMap((c) =>
+      c.visits.map((v) => ({
+        ...v,
+        dueDate: v.dueDate.toISOString(),
+        contractName: c.projectName,
+        contract: {
+          id: c.id,
+          projectName: c.projectName,
+          client: c.client,
+          location: c.location,
+          contractStart: c.contractStart.toISOString(),
+          overallStatus: c.overallStatus,
+          projectId: c.projectId,
+          remarks: c.remarks,
+        },
+      }))
+    )
     .filter((v) => v.status !== "COMPLETED")
-    .sort((a, b) => Math.abs(a.dueDate.getTime() - now) - Math.abs(b.dueDate.getTime() - now))
+    .sort((a, b) => Math.abs(new Date(a.dueDate).getTime() - now) - Math.abs(new Date(b.dueDate).getTime() - now))
     .slice(0, 4);
+
+  const projectOptions = projects.map((p) => ({ id: p.id, projectName: p.projectName }));
 
   const recentProjects = [
     ...projects.map((p) => ({
@@ -189,41 +196,7 @@ export default async function DashboardOverview() {
           </div>
         </div>
 
-        <div className="border border-gray-200 rounded-lg bg-white p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-semibold text-brounic-black">Upcoming AMC Visits</h2>
-            <Link href="/dashboard/amc" className="text-xs text-brounic-orange font-medium flex items-center gap-1">
-              View all <ArrowUpRight size={12} />
-            </Link>
-          </div>
-          <div className="space-y-1">
-            {upcomingVisits.map((v) => (
-              <Link
-                key={v.id}
-                href="/dashboard/amc"
-                className="flex items-center justify-between py-2.5 border-b border-gray-50 last:border-0 hover:bg-gray-50 -mx-2 px-2 rounded-md"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-md bg-brounic-accent/20 flex items-center justify-center text-brounic-orange shrink-0">
-                    <Clock size={14} />
-                  </div>
-                  <div>
-                    <div className="text-sm font-medium text-brounic-black">
-                      {v.contractName} · {v.quarter}
-                    </div>
-                    <div className="text-xs text-gray-400">{new Date(v.dueDate).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}</div>
-                  </div>
-                </div>
-                <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-600 font-medium whitespace-nowrap">
-                  {relativeDue(v.dueDate)}
-                </span>
-              </Link>
-            ))}
-            {upcomingVisits.length === 0 && (
-              <div className="text-sm text-gray-400 py-4 text-center">No upcoming visits.</div>
-            )}
-          </div>
-        </div>
+        <UpcomingAMCVisits visits={upcomingVisits} projects={projectOptions} />
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
