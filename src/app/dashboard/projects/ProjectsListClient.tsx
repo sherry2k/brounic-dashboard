@@ -38,7 +38,7 @@ function allItems(project: any) {
 }
 
 function progressOf(project: any) {
-  return calculateOverallProgress(project.progressCategories ?? [], project.shopDrawingStatus);
+  return calculateOverallProgress(project.progressCategories ?? []);
 }
 
 export default function ProjectsListClient({ initialProjects }: { initialProjects: any[] }) {

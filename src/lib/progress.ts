@@ -1,5 +1,8 @@
 export const DEFAULT_PROGRESS_STRUCTURE: { category: string; tasks: string[] }[] = [
-  { category: "Shop Drawing", tasks: [] },
+  {
+    category: "Shop Drawing",
+    tasks: ["Shop Drawings Approval", "Mobilization"],
+  },
   {
     category: "Fire Alarm System",
     tasks: [
@@ -59,16 +62,23 @@ export const DEFAULT_PROGRESS_STRUCTURE: { category: string; tasks: string[] }[]
   },
 ];
 
-// Shop Drawing Approved contributes a flat 2%; the checklist tasks make up
-// the remaining 98%, so full completion of both reaches exactly 100%.
+// "Shop Drawings Approval" (inside the Shop Drawing category) being checked
+// contributes a flat 2%. Every other task — including Mobilization and all
+// other categories — makes up the remaining 98%, so full completion of both
+// reaches exactly 100%.
 export function calculateOverallProgress(
-  categories: { items: { completed: boolean }[] }[],
-  shopDrawingStatus: string
+  categories: { label?: string; items: { id: string; label: string; completed: boolean }[] }[]
 ) {
-  const items = categories.flatMap((c) => c.items);
-  const total = items.length;
-  const done = items.filter((i) => i.completed).length;
+  const allItems = categories.flatMap((c) => c.items);
+
+  const shopDrawingCategory = categories.find((c) => c.label === "Shop Drawing");
+  const approvalItem = shopDrawingCategory?.items.find((i) => i.label === "Shop Drawings Approval");
+  const approvalDone = approvalItem?.completed ?? false;
+
+  const poolItems = approvalItem ? allItems.filter((i) => i.id !== approvalItem.id) : allItems;
+  const total = poolItems.length;
+  const done = poolItems.filter((i) => i.completed).length;
   const checklistPortion = total === 0 ? 0 : (done / total) * 98;
-  const shopBonus = shopDrawingStatus === "APPROVED" ? 2 : 0;
-  return Math.round(checklistPortion + shopBonus);
+  const bonus = approvalDone ? 2 : 0;
+  return Math.round(checklistPortion + bonus);
 }

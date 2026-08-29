@@ -30,7 +30,7 @@ export default async function ProjectDetailPage({ params }: { params: { id: stri
 
   if (!project) notFound();
 
-  const progress = calculateOverallProgress(project.progressCategories, project.shopDrawingStatus);
+  const progress = calculateOverallProgress(project.progressCategories);
 
   return (
     <div className="space-y-8">

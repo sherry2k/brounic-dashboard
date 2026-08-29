@@ -295,7 +295,7 @@ export default function EditMaintenanceModal({
     setCategories((prev) => prev.filter((c) => c.id !== categoryId));
   }
 
-  const progress = calculateOverallProgress(categories, form.shopDrawingStatus);
+  const progress = calculateOverallProgress(categories);
 
   async function handleSave() {
     setError("");
@@ -388,19 +388,6 @@ export default function EditMaintenanceModal({
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Shop Drawing Status</label>
-          <select
-            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brounic-orange focus:border-brounic-orange bg-white"
-            value={form.shopDrawingStatus}
-            onChange={(e) => setForm({ ...form, shopDrawingStatus: e.target.value })}
-          >
-            {DRAWING_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
-            ))}
-          </select>
-        </div>
-
-        <div>
           <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Job Type</label>
           <select
             className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brounic-orange focus:border-brounic-orange bg-white"
@@ -411,6 +398,22 @@ export default function EditMaintenanceModal({
               <option key={opt.value} value={opt.value}>{opt.label}</option>
             ))}
           </select>
+        </div>
+
+        <div>
+          <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Shop Drawing Status</label>
+          <select
+            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brounic-orange focus:border-brounic-orange bg-white"
+            value={form.shopDrawingStatus}
+            onChange={(e) => setForm({ ...form, shopDrawingStatus: e.target.value })}
+          >
+            {DRAWING_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
+          </select>
+          <p className="text-xs text-gray-400 mt-1">
+            This field is for reference only — progress credit comes from checking off "Shop Drawings Approval" below.
+          </p>
         </div>
 
         <div>

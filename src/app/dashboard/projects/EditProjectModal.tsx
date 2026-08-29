@@ -288,7 +288,7 @@ export default function EditProjectModal({
     setCategories((prev) => prev.filter((c) => c.id !== categoryId));
   }
 
-  const progress = calculateOverallProgress(categories, form.shopDrawingStatus);
+  const progress = calculateOverallProgress(categories);
 
   async function handleSave() {
     setError("");
@@ -393,6 +393,9 @@ export default function EditProjectModal({
               <option key={opt.value} value={opt.value}>{opt.label}</option>
             ))}
           </select>
+          <p className="text-xs text-gray-400 mt-1">
+            This field is for reference only — progress credit comes from checking off "Shop Drawings Approval" below.
+          </p>
         </div>
 
         <div>

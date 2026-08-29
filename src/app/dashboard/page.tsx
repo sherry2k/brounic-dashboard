@@ -32,7 +32,7 @@ export default async function DashboardOverview() {
   const doneProjects = projects.filter((p) => p.overallStatus === "COMPLETED").length;
 
   const projectProgress = (p: (typeof projects)[number]) =>
-    calculateOverallProgress(p.progressCategories, p.shopDrawingStatus);
+    calculateOverallProgress(p.progressCategories);
   const avgInstallProgress =
     totalProjects === 0 ? 0 : Math.round(projects.reduce((sum, p) => sum + projectProgress(p), 0) / totalProjects);
 
