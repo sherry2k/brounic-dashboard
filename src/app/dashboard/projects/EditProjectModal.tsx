@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { X, Check, Plus, Trash2, ChevronDown, ChevronRight } from "lucide-react";
+import { X, Check, Plus, Trash2, Pencil, Save, ChevronDown, ChevronRight } from "lucide-react";
+import { calculateOverallProgress } from "@/lib/progress";
 
 const STATUS_OPTIONS = [
   { value: "ACTIVE", label: "Active" },
@@ -19,6 +20,98 @@ const DRAWING_OPTIONS = [
 function toDateInputValue(iso: string | null) {
   if (!iso) return "";
   return new Date(iso).toISOString().slice(0, 10);
+}
+
+function TaskRow({
+  item,
+  projectId,
+  onToggle,
+  onDelete,
+  onLabelSaved,
+}: {
+  item: any;
+  projectId: string;
+  onToggle: () => void;
+  onDelete: () => void;
+  onLabelSaved: (label: string) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [label, setLabel] = useState(item.label);
+  const [saving, setSaving] = useState(false);
+
+  async function saveLabel() {
+    if (!label.trim()) return;
+    setSaving(true);
+    const res = await fetch(`/api/projects/${projectId}/progress-items/${item.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ label: label.trim() }),
+    });
+    setSaving(false);
+    if (res.ok) {
+      onLabelSaved(label.trim());
+      setEditing(false);
+    }
+  }
+
+  if (editing) {
+    return (
+      <div className="w-full flex items-center gap-2 border border-gray-200 rounded-md px-3 py-2">
+        <input
+          autoFocus
+          value={label}
+          onChange={(e) => setLabel(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              saveLabel();
+            }
+            if (e.key === "Escape") {
+              setLabel(item.label);
+              setEditing(false);
+            }
+          }}
+          className="flex-1 text-sm border border-gray-300 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-brounic-orange focus:border-brounic-orange"
+        />
+        <button type="button" onClick={saveLabel} disabled={saving} className="p-1 text-brounic-black hover:text-brounic-orange shrink-0 disabled:opacity-50">
+          <Save size={14} />
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setLabel(item.label);
+            setEditing(false);
+          }}
+          className="p-1 text-gray-400 hover:text-gray-600 shrink-0"
+        >
+          <X size={14} />
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-full flex items-center gap-2 border border-gray-200 rounded-md px-3 py-2 hover:border-gray-300">
+      <button type="button" onClick={onToggle} className="flex-1 flex items-center gap-3 text-left">
+        <span
+          className={`w-5 h-5 rounded-md flex items-center justify-center shrink-0 border ${
+            item.completed ? "bg-brounic-orange border-brounic-orange text-white" : "border-gray-300"
+          }`}
+        >
+          {item.completed && <Check size={13} />}
+        </span>
+        <span className={`text-sm ${item.completed ? "line-through text-gray-400" : "text-brounic-black"}`}>
+          {item.label}
+        </span>
+      </button>
+      <button type="button" onClick={() => setEditing(true)} className="p-1 text-gray-300 hover:text-brounic-black shrink-0" title="Edit task">
+        <Pencil size={13} />
+      </button>
+      <button type="button" onClick={onDelete} className="p-1 text-gray-300 hover:text-red-600 shrink-0" title="Delete task">
+        <Trash2 size={14} />
+      </button>
+    </div>
+  );
 }
 
 function CategorySection({
@@ -108,26 +201,14 @@ function CategorySection({
       {expanded && (
         <div className="p-3 space-y-2 bg-white">
           {items.map((item: any) => (
-            <div
+            <TaskRow
               key={item.id}
-              className="w-full flex items-center gap-2 border border-gray-200 rounded-md px-3 py-2 hover:border-gray-300"
-            >
-              <button type="button" onClick={() => toggleItem(item)} className="flex-1 flex items-center gap-3 text-left">
-                <span
-                  className={`w-5 h-5 rounded-md flex items-center justify-center shrink-0 border ${
-                    item.completed ? "bg-brounic-orange border-brounic-orange text-white" : "border-gray-300"
-                  }`}
-                >
-                  {item.completed && <Check size={13} />}
-                </span>
-                <span className={`text-sm ${item.completed ? "line-through text-gray-400" : "text-brounic-black"}`}>
-                  {item.label}
-                </span>
-              </button>
-              <button type="button" onClick={() => deleteItem(item)} className="p-1 text-gray-300 hover:text-red-600 shrink-0">
-                <Trash2 size={14} />
-              </button>
-            </div>
+              item={item}
+              projectId={projectId}
+              onToggle={() => toggleItem(item)}
+              onDelete={() => deleteItem(item)}
+              onLabelSaved={(label) => onItemsChanged(category.id, items.map((i: any) => (i.id === item.id ? { ...i, label } : i)))}
+            />
           ))}
           {items.length === 0 && (
             <p className="text-xs text-gray-400 px-1">No tasks yet — add one below.</p>
@@ -207,10 +288,7 @@ export default function EditProjectModal({
     setCategories((prev) => prev.filter((c) => c.id !== categoryId));
   }
 
-  const allItems = categories.flatMap((c) => c.items ?? []);
-  const total = allItems.length;
-  const done = allItems.filter((i) => i.completed).length;
-  const progress = total === 0 ? 0 : Math.round((done / total) * 100);
+  const progress = calculateOverallProgress(categories, form.shopDrawingStatus);
 
   async function handleSave() {
     setError("");

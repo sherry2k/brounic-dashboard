@@ -4,7 +4,10 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-const patchSchema = z.object({ completed: z.boolean() });
+const patchSchema = z.object({
+  completed: z.boolean().optional(),
+  label: z.string().min(1).optional(),
+});
 
 export async function PATCH(
   req: Request,
@@ -23,7 +26,10 @@ export async function PATCH(
 
   const item = await prisma.maintenanceProgressItem.update({
     where: { id: params.itemId },
-    data: { completed: parsed.data.completed },
+    data: {
+      ...(parsed.data.completed !== undefined ? { completed: parsed.data.completed } : {}),
+      ...(parsed.data.label !== undefined ? { label: parsed.data.label } : {}),
+    },
   });
 
   return NextResponse.json({ ok: true, item });

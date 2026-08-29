@@ -58,3 +58,17 @@ export const DEFAULT_PROGRESS_STRUCTURE: { category: string; tasks: string[] }[]
     ],
   },
 ];
+
+// Shop Drawing Approved contributes a flat 2%; the checklist tasks make up
+// the remaining 98%, so full completion of both reaches exactly 100%.
+export function calculateOverallProgress(
+  categories: { items: { completed: boolean }[] }[],
+  shopDrawingStatus: string
+) {
+  const items = categories.flatMap((c) => c.items);
+  const total = items.length;
+  const done = items.filter((i) => i.completed).length;
+  const checklistPortion = total === 0 ? 0 : (done / total) * 98;
+  const shopBonus = shopDrawingStatus === "APPROVED" ? 2 : 0;
+  return Math.round(checklistPortion + shopBonus);
+}

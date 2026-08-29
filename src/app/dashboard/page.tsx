@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { calculateOverallProgress } from "@/lib/progress";
 import { Boxes, Package, Wrench, CalendarCheck, ArrowUpRight, Clock } from "lucide-react";
 
 function daysUntil(date: Date) {
@@ -30,13 +31,8 @@ export default async function DashboardOverview() {
   const activeProjects = projects.filter((p) => p.overallStatus === "ACTIVE").length;
   const doneProjects = projects.filter((p) => p.overallStatus === "COMPLETED").length;
 
-  const projectProgress = (p: (typeof projects)[number]) => {
-    const items = p.progressCategories.flatMap((c) => c.items);
-    const total = items.length;
-    if (total === 0) return 0;
-    const done = items.filter((i) => i.completed).length;
-    return Math.round((done / total) * 100);
-  };
+  const projectProgress = (p: (typeof projects)[number]) =>
+    calculateOverallProgress(p.progressCategories, p.shopDrawingStatus);
   const avgInstallProgress =
     totalProjects === 0 ? 0 : Math.round(projects.reduce((sum, p) => sum + projectProgress(p), 0) / totalProjects);
 

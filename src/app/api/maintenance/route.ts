@@ -12,6 +12,7 @@ const maintenanceSchema = z.object({
   location: z.string().optional(),
   contractDate: z.coerce.date().optional(),
   overallStatus: z.enum(["ACTIVE", "COMPLETED", "ON_HOLD"]).default("ACTIVE"),
+  shopDrawingStatus: z.enum(["NOT_STARTED", "IN_PROGRESS", "NEEDS_REVIEW", "APPROVED"]).default("NOT_STARTED"),
   jobType: z.enum(["REACTIVE", "SCHEDULED", "WARRANTY"]).default("REACTIVE"),
   description: z.string().min(1),
   contractValue: z.coerce.number().optional(),
@@ -31,7 +32,7 @@ export async function POST(req: Request) {
   }
 
   const {
-    jobName, client, plotNo, location, contractDate, overallStatus, jobType,
+    jobName, client, plotNo, location, contractDate, overallStatus, shopDrawingStatus, jobType,
     description, contractValue, receivedAmount,
   } = parsed.data;
 
@@ -43,6 +44,7 @@ export async function POST(req: Request) {
       location: location || null,
       contractDate: contractDate ?? null,
       overallStatus,
+      shopDrawingStatus,
       jobType,
       description,
       status: "REPORTED",

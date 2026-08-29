@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Boxes, Search, Plus, ExternalLink, Pencil, Trash2, Download } from "lucide-react";
 import EditProjectModal from "./EditProjectModal";
 import { downloadCSV } from "@/lib/csv";
+import { calculateOverallProgress } from "@/lib/progress";
 
 const STATUS_STYLES: Record<string, string> = {
   ACTIVE: "bg-brounic-accent/30 text-brounic-orange",
@@ -37,11 +38,7 @@ function allItems(project: any) {
 }
 
 function progressOf(project: any) {
-  const items = allItems(project);
-  const total = items.length;
-  if (total === 0) return 0;
-  const done = items.filter((i: any) => i.completed).length;
-  return Math.round((done / total) * 100);
+  return calculateOverallProgress(project.progressCategories ?? [], project.shopDrawingStatus);
 }
 
 export default function ProjectsListClient({ initialProjects }: { initialProjects: any[] }) {

@@ -11,6 +11,7 @@ const maintenanceUpdateSchema = z.object({
   location: z.string().optional(),
   contractDate: z.coerce.date().optional(),
   overallStatus: z.enum(["ACTIVE", "COMPLETED", "ON_HOLD"]),
+  shopDrawingStatus: z.enum(["NOT_STARTED", "IN_PROGRESS", "NEEDS_REVIEW", "APPROVED"]).optional(),
   jobType: z.enum(["REACTIVE", "SCHEDULED", "WARRANTY"]).optional(),
   description: z.string().optional(),
   contractValue: z.coerce.number().optional(),
@@ -30,7 +31,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   }
 
   const {
-    jobName, client, plotNo, location, contractDate, overallStatus, jobType,
+    jobName, client, plotNo, location, contractDate, overallStatus, shopDrawingStatus, jobType,
     description, contractValue, receivedAmount,
   } = parsed.data;
 
@@ -43,6 +44,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       location: location || null,
       contractDate: contractDate ?? null,
       overallStatus,
+      ...(shopDrawingStatus ? { shopDrawingStatus } : {}),
       ...(jobType ? { jobType } : {}),
       ...(description ? { description } : {}),
       contractValue: contractValue ?? null,

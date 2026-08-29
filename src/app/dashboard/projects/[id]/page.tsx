@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { calculateOverallProgress } from "@/lib/progress";
 
 const STATUS_LABELS: Record<string, string> = {
   NOT_STARTED: "Not Started",
@@ -29,10 +30,7 @@ export default async function ProjectDetailPage({ params }: { params: { id: stri
 
   if (!project) notFound();
 
-  const allItems = project.progressCategories.flatMap((c) => c.items);
-  const total = allItems.length;
-  const done = allItems.filter((i) => i.completed).length;
-  const progress = total === 0 ? 0 : Math.round((done / total) * 100);
+  const progress = calculateOverallProgress(project.progressCategories, project.shopDrawingStatus);
 
   return (
     <div className="space-y-8">

@@ -3,6 +3,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
+const DRAWING_OPTIONS = [
+  { value: "NOT_STARTED", label: "Not Started" },
+  { value: "IN_PROGRESS", label: "In Progress" },
+  { value: "NEEDS_REVIEW", label: "Needs Review" },
+  { value: "APPROVED", label: "Approved" },
+];
+
 const JOB_TYPES = [
   { value: "REACTIVE", label: "Reactive (fault reported)" },
   { value: "SCHEDULED", label: "Scheduled" },
@@ -17,6 +24,7 @@ export default function NewMaintenancePage() {
     plotNo: "",
     location: "",
     contractDate: "",
+    shopDrawingStatus: "NOT_STARTED",
     jobType: "REACTIVE",
     description: "",
     contractValue: "",
@@ -105,6 +113,19 @@ export default function NewMaintenancePage() {
               onChange={(e) => setForm({ ...form, location: e.target.value })}
             />
           </div>
+        </div>
+
+        <div>
+          <label className="block text-sm mb-1 text-brounic-dark">Shop drawing status</label>
+          <select
+            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brounic-orange focus:border-brounic-orange bg-white"
+            value={form.shopDrawingStatus}
+            onChange={(e) => setForm({ ...form, shopDrawingStatus: e.target.value })}
+          >
+            {DRAWING_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
+          </select>
         </div>
 
         <div>

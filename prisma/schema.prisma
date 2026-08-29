@@ -234,6 +234,7 @@ model MaintenanceJob {
   location    String?
   contractDate DateTime?
   overallStatus OverallStatus    @default(ACTIVE)
+  shopDrawingStatus ShopDrawingStatus @default(NOT_STARTED)
   contractValue  Float?
   receivedAmount Float?
   siteId      String?
