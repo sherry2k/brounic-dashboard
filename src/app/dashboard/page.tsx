@@ -46,7 +46,7 @@ export default async function DashboardOverview() {
   const upcomingVisits = amcContracts
     .flatMap((c) => c.visits.map((v) => ({ ...v, contractName: c.projectName })))
     .filter((v) => v.status !== "COMPLETED")
-    .sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime())
+    .sort((a, b) => b.dueDate.getTime() - a.dueDate.getTime())
     .slice(0, 4);
 
   const recentProjects = [
