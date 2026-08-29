@@ -43,10 +43,11 @@ export default async function DashboardOverview() {
   const allVisits = amcContracts.flatMap((c) => c.visits);
   const visitsDone = allVisits.filter((v) => v.status === "COMPLETED").length;
 
+  const now = Date.now();
   const upcomingVisits = amcContracts
     .flatMap((c) => c.visits.map((v) => ({ ...v, contractName: c.projectName })))
     .filter((v) => v.status !== "COMPLETED")
-    .sort((a, b) => b.dueDate.getTime() - a.dueDate.getTime())
+    .sort((a, b) => Math.abs(a.dueDate.getTime() - now) - Math.abs(b.dueDate.getTime() - now))
     .slice(0, 4);
 
   const recentProjects = [
