@@ -35,6 +35,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     const item = await prisma.maintenanceProgressItem.create({
       data: { categoryId: parsed.data.categoryId, label: parsed.data.label, order: count },
     });
+    await prisma.maintenanceJob.update({ where: { id: params.id }, data: { updatedAt: new Date() } });
     return NextResponse.json({ ok: true, item });
   }
 

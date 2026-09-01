@@ -13,6 +13,7 @@ export async function DELETE(
   }
 
   await prisma.maintenanceProgressCategory.delete({ where: { id: params.categoryId } });
+  await prisma.maintenanceJob.update({ where: { id: params.id }, data: { updatedAt: new Date() } });
 
   return NextResponse.json({ ok: true });
 }

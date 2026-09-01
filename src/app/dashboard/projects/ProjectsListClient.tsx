@@ -6,6 +6,7 @@ import { Boxes, Search, Plus, ExternalLink, Pencil, Trash2, Download } from "luc
 import EditProjectModal from "./EditProjectModal";
 import { downloadCSV } from "@/lib/csv";
 import { calculateOverallProgress } from "@/lib/progress";
+import { formatRelativeUpdated } from "@/lib/time";
 
 const STATUS_STYLES: Record<string, string> = {
   ACTIVE: "bg-brounic-accent/30 text-brounic-orange",
@@ -68,7 +69,7 @@ export default function ProjectsListClient({ initialProjects }: { initialProject
     const headers = [
       "Project Name", "Client", "Plot No.", "Location", "Contract Date",
       "Shop Drawing Status", "Status", "Progress %", "Contract Value",
-      "Received", "Due", "Notes",
+      "Received", "Due", "Last Updated", "Notes",
     ];
     const rows = filtered.map((p) => {
       const items = allItems(p);
@@ -82,7 +83,7 @@ export default function ProjectsListClient({ initialProjects }: { initialProject
         p.projectName, p.client || "", p.plotNo || "", p.location || "",
         p.contractDate ? new Date(p.contractDate).toLocaleDateString() : "",
         DRAWING_LABELS[p.shopDrawingStatus], STATUS_LABELS[p.overallStatus], progress,
-        cv, ra, due, p.notes || "",
+        cv, ra, due, new Date(p.updatedAt).toLocaleString(), p.notes || "",
       ];
     });
     downloadCSV(`brounic-projects-${new Date().toISOString().slice(0, 10)}.csv`, headers, rows);
@@ -167,6 +168,7 @@ export default function ProjectsListClient({ initialProjects }: { initialProject
               <th className="px-4 py-3 font-normal">Shop Drawing</th>
               <th className="px-4 py-3 font-normal">Status</th>
               <th className="px-4 py-3 font-normal">Progress</th>
+              <th className="px-4 py-3 font-normal">Last Updated</th>
               <th className="px-4 py-3 font-normal text-right">Actions</th>
             </tr>
           </thead>
@@ -217,6 +219,9 @@ export default function ProjectsListClient({ initialProjects }: { initialProject
                       <span className="text-xs text-gray-500 w-9">{progress}%</span>
                     </div>
                   </td>
+                  <td className="px-4 py-3 text-gray-500 text-xs" title={new Date(p.updatedAt).toLocaleString()}>
+                    {formatRelativeUpdated(p.updatedAt)}
+                  </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
                       <button
@@ -247,7 +252,7 @@ export default function ProjectsListClient({ initialProjects }: { initialProject
             })}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={8} className="px-4 py-6 text-center text-gray-400">
+                <td colSpan={9} className="px-4 py-6 text-center text-gray-400">
                   {search ? "No projects match your search." : "No projects yet."}
                 </td>
               </tr>

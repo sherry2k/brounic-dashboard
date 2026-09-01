@@ -32,6 +32,8 @@ export async function PATCH(
     },
   });
 
+  await prisma.maintenanceJob.update({ where: { id: params.id }, data: { updatedAt: new Date() } });
+
   return NextResponse.json({ ok: true, item });
 }
 
@@ -45,6 +47,7 @@ export async function DELETE(
   }
 
   await prisma.maintenanceProgressItem.delete({ where: { id: params.itemId } });
+  await prisma.maintenanceJob.update({ where: { id: params.id }, data: { updatedAt: new Date() } });
 
   return NextResponse.json({ ok: true });
 }

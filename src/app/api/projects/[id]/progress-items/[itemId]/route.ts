@@ -32,6 +32,9 @@ export async function PATCH(
     },
   });
 
+  // A task change counts as an update to the project itself.
+  await prisma.project.update({ where: { id: params.id }, data: { updatedAt: new Date() } });
+
   return NextResponse.json({ ok: true, item });
 }
 
@@ -45,6 +48,7 @@ export async function DELETE(
   }
 
   await prisma.projectProgressItem.delete({ where: { id: params.itemId } });
+  await prisma.project.update({ where: { id: params.id }, data: { updatedAt: new Date() } });
 
   return NextResponse.json({ ok: true });
 }

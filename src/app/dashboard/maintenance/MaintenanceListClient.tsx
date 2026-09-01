@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Search, Plus, ExternalLink, Pencil, Trash2, Download } from "lucide-react";
 import EditMaintenanceModal from "./EditMaintenanceModal";
 import { downloadCSV } from "@/lib/csv";
+import { formatRelativeUpdated } from "@/lib/time";
 
 const STATUS_STYLES: Record<string, string> = {
   ACTIVE: "bg-brounic-accent/30 text-brounic-orange",
@@ -41,7 +42,7 @@ export default function MaintenanceListClient({ initialJobs }: { initialJobs: an
   function handleExport() {
     const headers = [
       "Job Name", "Client", "Plot No.", "Location", "Contract Date",
-      "Job Type", "Status", "Contract Value", "Received", "Due", "Description",
+      "Job Type", "Status", "Contract Value", "Received", "Due", "Last Updated", "Description",
     ];
     const rows = filtered.map((j) => {
       const due = j.contractValue != null ? Number(j.contractValue) - Number(j.receivedAmount || 0) : "";
@@ -49,7 +50,7 @@ export default function MaintenanceListClient({ initialJobs }: { initialJobs: an
         j.jobName, j.client || "", j.plotNo || "", j.location || "",
         j.contractDate ? new Date(j.contractDate).toLocaleDateString() : "",
         j.jobType, STATUS_LABELS[j.overallStatus],
-        j.contractValue ?? "", j.receivedAmount ?? "", due, j.description || "",
+        j.contractValue ?? "", j.receivedAmount ?? "", due, new Date(j.updatedAt).toLocaleString(), j.description || "",
       ];
     });
     downloadCSV(`brounic-maintenance-${new Date().toISOString().slice(0, 10)}.csv`, headers, rows);
@@ -121,6 +122,7 @@ export default function MaintenanceListClient({ initialJobs }: { initialJobs: an
               <th className="px-4 py-3 font-normal">Location</th>
               <th className="px-4 py-3 font-normal">Contract</th>
               <th className="px-4 py-3 font-normal">Status</th>
+              <th className="px-4 py-3 font-normal">Last Updated</th>
               <th className="px-4 py-3 font-normal text-right">Actions</th>
             </tr>
           </thead>
@@ -144,6 +146,9 @@ export default function MaintenanceListClient({ initialJobs }: { initialJobs: an
                   <span className={`text-xs px-2 py-1 rounded-full ${STATUS_STYLES[j.overallStatus]}`}>
                     {STATUS_LABELS[j.overallStatus]}
                   </span>
+                </td>
+                <td className="px-4 py-3 text-gray-500 text-xs" title={new Date(j.updatedAt).toLocaleString()}>
+                  {formatRelativeUpdated(j.updatedAt)}
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
@@ -174,7 +179,7 @@ export default function MaintenanceListClient({ initialJobs }: { initialJobs: an
             ))}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-6 text-center text-gray-400">
+                <td colSpan={7} className="px-4 py-6 text-center text-gray-400">
                   {search ? "No jobs match your search." : "No maintenance jobs yet."}
                 </td>
               </tr>

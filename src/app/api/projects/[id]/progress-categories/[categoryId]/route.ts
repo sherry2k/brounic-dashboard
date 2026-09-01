@@ -14,6 +14,7 @@ export async function DELETE(
 
   // Cascade delete removes all items in this category too.
   await prisma.projectProgressCategory.delete({ where: { id: params.categoryId } });
+  await prisma.project.update({ where: { id: params.id }, data: { updatedAt: new Date() } });
 
   return NextResponse.json({ ok: true });
 }
