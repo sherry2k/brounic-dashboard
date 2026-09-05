@@ -6,12 +6,17 @@ import { Search, Plus, ExternalLink, Pencil, Trash2, Download } from "lucide-rea
 import EditMaintenanceModal from "./EditMaintenanceModal";
 import { downloadCSV } from "@/lib/csv";
 import { formatRelativeUpdated } from "@/lib/time";
+import { calculateSimpleProgress } from "@/lib/progress";
 
 const STATUS_STYLES: Record<string, string> = {
   ACTIVE: "bg-brounic-accent/30 text-brounic-orange",
   COMPLETED: "bg-green-100 text-green-700",
   ON_HOLD: "bg-gray-100 text-gray-600",
 };
+
+function progressOf(job: any) {
+  return calculateSimpleProgress(job.progressCategories ?? []);
+}
 
 const STATUS_LABELS: Record<string, string> = {
   ACTIVE: "Active",
@@ -42,14 +47,14 @@ export default function MaintenanceListClient({ initialJobs }: { initialJobs: an
   function handleExport() {
     const headers = [
       "Job Name", "Client", "Plot No.", "Location", "Contract Date",
-      "Job Type", "Status", "Contract Value", "Received", "Due", "Last Updated", "Description",
+      "Job Type", "Status", "Progress %", "Contract Value", "Received", "Due", "Last Updated", "Description",
     ];
     const rows = filtered.map((j) => {
       const due = j.contractValue != null ? Number(j.contractValue) - Number(j.receivedAmount || 0) : "";
       return [
         j.jobName, j.client || "", j.plotNo || "", j.location || "",
         j.contractDate ? new Date(j.contractDate).toLocaleDateString() : "",
-        j.jobType, STATUS_LABELS[j.overallStatus],
+        j.jobType, STATUS_LABELS[j.overallStatus], progressOf(j),
         j.contractValue ?? "", j.receivedAmount ?? "", due, new Date(j.updatedAt).toLocaleString(), j.description || "",
       ];
     });
@@ -122,13 +127,20 @@ export default function MaintenanceListClient({ initialJobs }: { initialJobs: an
               <th className="px-4 py-3 font-normal">Location</th>
               <th className="px-4 py-3 font-normal">Contract</th>
               <th className="px-4 py-3 font-normal">Status</th>
+              <th className="px-4 py-3 font-normal">Progress</th>
               <th className="px-4 py-3 font-normal">Last Updated</th>
               <th className="px-4 py-3 font-normal text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {filtered.map((j) => (
-              <tr key={j.id} onClick={() => setEditing(j)} className="border-t hover:bg-gray-50 cursor-pointer">
+            {filtered.map((j) => {
+              const progress = progressOf(j);
+              return (
+              <tr
+                key={j.id}
+                onClick={() => setEditing(j)}
+                className={`border-t cursor-pointer ${progress === 100 ? "bg-green-50 hover:bg-green-100" : "hover:bg-gray-50"}`}
+              >
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-md bg-brounic-black text-white text-xs font-medium flex items-center justify-center shrink-0">
@@ -146,6 +158,19 @@ export default function MaintenanceListClient({ initialJobs }: { initialJobs: an
                   <span className={`text-xs px-2 py-1 rounded-full ${STATUS_STYLES[j.overallStatus]}`}>
                     {STATUS_LABELS[j.overallStatus]}
                   </span>
+                </td>
+                <td className="px-4 py-3">
+                  <div className="flex items-center gap-2 w-32">
+                    <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full ${progress === 100 ? "bg-green-500" : "bg-brounic-orange"}`}
+                        style={{ width: `${progress}%` }}
+                      />
+                    </div>
+                    <span className={`text-xs w-9 ${progress === 100 ? "text-green-600 font-medium" : "text-gray-500"}`}>
+                      {progress}%
+                    </span>
+                  </div>
                 </td>
                 <td className="px-4 py-3 text-gray-500 text-xs" title={new Date(j.updatedAt).toLocaleString()}>
                   {formatRelativeUpdated(j.updatedAt)}
@@ -176,10 +201,11 @@ export default function MaintenanceListClient({ initialJobs }: { initialJobs: an
                   </div>
                 </td>
               </tr>
-            ))}
+              );
+            })}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-6 text-center text-gray-400">
+                <td colSpan={8} className="px-4 py-6 text-center text-gray-400">
                   {search ? "No jobs match your search." : "No maintenance jobs yet."}
                 </td>
               </tr>
