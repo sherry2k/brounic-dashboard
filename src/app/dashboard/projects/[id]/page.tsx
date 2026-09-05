@@ -55,9 +55,14 @@ export default async function ProjectDetailPage({ params }: { params: { id: stri
         <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
           <div className="flex items-center gap-3">
             <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
-              <div className="h-full bg-brounic-orange rounded-full" style={{ width: `${progress}%` }} />
+              <div
+                className={`h-full rounded-full ${progress === 100 ? "bg-green-500" : "bg-brounic-orange"}`}
+                style={{ width: `${progress}%` }}
+              />
             </div>
-            <span className="text-sm font-medium text-brounic-black w-10">{progress}%</span>
+            <span className={`text-sm font-medium w-10 ${progress === 100 ? "text-green-600" : "text-brounic-black"}`}>
+              {progress}%
+            </span>
           </div>
 
           {project.progressCategories.map((cat) => (

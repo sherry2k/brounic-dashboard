@@ -82,3 +82,13 @@ export function calculateOverallProgress(
   const bonus = approvalDone ? 2 : 0;
   return Math.round(checklistPortion + bonus);
 }
+
+// Maintenance jobs don't need Shop Drawing approval — every task counts
+// equally toward 100%, no special-cased bonus task.
+export function calculateSimpleProgress(categories: { items: { completed: boolean }[] }[]) {
+  const items = categories.flatMap((c) => c.items);
+  const total = items.length;
+  if (total === 0) return 0;
+  const done = items.filter((i) => i.completed).length;
+  return Math.round((done / total) * 100);
+}

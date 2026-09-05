@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { X, Check, Plus, Trash2, Pencil, Save, ChevronDown, ChevronRight } from "lucide-react";
-import { calculateOverallProgress } from "@/lib/progress";
+import { calculateSimpleProgress } from "@/lib/progress";
 
 const STATUS_OPTIONS = [
   { value: "ACTIVE", label: "Active" },
@@ -295,7 +295,7 @@ export default function EditMaintenanceModal({
     setCategories((prev) => prev.filter((c) => c.id !== categoryId));
   }
 
-  const progress = calculateOverallProgress(categories);
+  const progress = calculateSimpleProgress(categories);
 
   async function handleSave() {
     setError("");
@@ -422,9 +422,14 @@ export default function EditMaintenanceModal({
           </label>
           <div className="flex items-center gap-3 mb-3">
             <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
-              <div className="h-full bg-brounic-orange rounded-full transition-all" style={{ width: `${progress}%` }} />
+              <div
+                className={`h-full rounded-full transition-all ${progress === 100 ? "bg-green-500" : "bg-brounic-orange"}`}
+                style={{ width: `${progress}%` }}
+              />
             </div>
-            <span className="text-sm font-medium text-brounic-black w-10">{progress}%</span>
+            <span className={`text-sm font-medium w-10 ${progress === 100 ? "text-green-600" : "text-brounic-black"}`}>
+              {progress}%
+            </span>
           </div>
 
           <div className="space-y-2 max-h-72 overflow-y-auto">

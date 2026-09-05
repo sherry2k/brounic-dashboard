@@ -181,7 +181,7 @@ export default function ProjectsListClient({ initialProjects }: { initialProject
                 <tr
                   key={p.id}
                   onClick={() => setEditing(p)}
-                  className="border-t hover:bg-gray-50 cursor-pointer"
+                  className={`border-t cursor-pointer ${progress === 100 ? "bg-green-50 hover:bg-green-100" : "hover:bg-gray-50"}`}
                 >
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
@@ -214,9 +214,14 @@ export default function ProjectsListClient({ initialProjects }: { initialProject
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2 w-32">
                       <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
-                        <div className="h-full bg-brounic-orange rounded-full" style={{ width: `${progress}%` }} />
+                        <div
+                          className={`h-full rounded-full ${progress === 100 ? "bg-green-500" : "bg-brounic-orange"}`}
+                          style={{ width: `${progress}%` }}
+                        />
                       </div>
-                      <span className="text-xs text-gray-500 w-9">{progress}%</span>
+                      <span className={`text-xs w-9 ${progress === 100 ? "text-green-600 font-medium" : "text-gray-500"}`}>
+                        {progress}%
+                      </span>
                     </div>
                   </td>
                   <td className="px-4 py-3 text-gray-500 text-xs" title={new Date(p.updatedAt).toLocaleString()}>
